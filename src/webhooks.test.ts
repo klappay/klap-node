@@ -1,7 +1,13 @@
 import { createHmac } from 'node:crypto'
-import { describe, expect, it } from 'vitest'
+import type { PaginatedWebhookDeliveries, Webhook, WebhookDelivery } from '@klappay/types'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { InvalidWebhookSignatureError, WebhookTimestampToleranceError } from './errors'
 import { constructWebhookEvent, createWebhooksClient, verifyWebhookSignature } from './webhooks'
+
+vi.mock('./http', () => ({ request: vi.fn() }))
+
+const { request } = await import('./http')
+const requestMock = vi.mocked(request)
 
 const SECRET = 'whsec_test_secret'
 
@@ -124,5 +130,124 @@ describe('createWebhooksClient().categories', () => {
 
   it('lists webhook.delivery_failed under webhooks', () => {
     expect(categories.webhooks).toContain('webhook.delivery_failed')
+  })
+})
+
+describe('createWebhooksClient() CRUD', () => {
+  const config = { baseUrl: 'https://api.example.com', apiKey: 'klap_test_key' }
+
+  const FAKE_WEBHOOK: Webhook = {
+    id: 'wh_1',
+    url: 'https://example.com/webhooks/klap',
+    events: [],
+    eventCategories: ['payments'],
+    excludeEvents: [],
+    isWildcard: false,
+    secret: 'whsec_abc',
+    createdAt: '2026-01-01T00:00:00.000Z',
+  }
+
+  const FAKE_DELIVERY: WebhookDelivery = {
+    id: 'whd_1',
+    webhookId: 'wh_1',
+    event: 'charge.confirmed',
+    status: 'delivered',
+    attempts: 1,
+    responseCode: 200,
+    nextRetryAt: null,
+    deliveredAt: '2026-01-01T00:00:00.000Z',
+    createdAt: '2026-01-01T00:00:00.000Z',
+  }
+
+  beforeEach(() => {
+    requestMock.mockReset()
+  })
+
+  it('create() posts the subscription config', async () => {
+    requestMock.mockResolvedValue(FAKE_WEBHOOK)
+
+    await createWebhooksClient(config).create({ url: 'https://example.com/webhooks/klap' })
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'POST',
+      path: '/v1/webhooks',
+      body: { url: 'https://example.com/webhooks/klap' },
+    })
+  })
+
+  it('list() fetches every configured webhook', async () => {
+    requestMock.mockResolvedValue([FAKE_WEBHOOK])
+
+    const result = await createWebhooksClient(config).list()
+
+    expect(requestMock).toHaveBeenCalledWith(config, { method: 'GET', path: '/v1/webhooks' })
+    expect(result).toEqual([FAKE_WEBHOOK])
+  })
+
+  it('delete() removes a webhook by id', async () => {
+    requestMock.mockResolvedValue(undefined)
+
+    await createWebhooksClient(config).delete('wh_1')
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'DELETE',
+      path: '/v1/webhooks/wh_1',
+    })
+  })
+
+  it('rotateSecret() posts to the rotate-secret endpoint', async () => {
+    requestMock.mockResolvedValue(FAKE_WEBHOOK)
+
+    await createWebhooksClient(config).rotateSecret('wh_1')
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'POST',
+      path: '/v1/webhooks/wh_1/rotate-secret',
+    })
+  })
+
+  it('listDeliveries() defaults the query to the default pagination limit', async () => {
+    requestMock.mockResolvedValue({ data: [], nextCursor: null, hasMore: false })
+
+    await createWebhooksClient(config).listDeliveries('wh_1')
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'GET',
+      path: '/v1/webhooks/wh_1/deliveries',
+      query: { limit: 20 },
+    })
+  })
+
+  it('listAllDeliveries() follows cursors across pages until hasMore is false', async () => {
+    const page1: PaginatedWebhookDeliveries = {
+      data: [{ ...FAKE_DELIVERY, id: 'whd_1' }],
+      nextCursor: 'cur_2',
+      hasMore: true,
+    }
+    const page2: PaginatedWebhookDeliveries = {
+      data: [{ ...FAKE_DELIVERY, id: 'whd_2' }],
+      nextCursor: null,
+      hasMore: false,
+    }
+    requestMock.mockResolvedValueOnce(page1).mockResolvedValueOnce(page2)
+
+    const ids: string[] = []
+    for await (const delivery of createWebhooksClient(config).listAllDeliveries('wh_1')) {
+      ids.push(delivery.id)
+    }
+
+    expect(ids).toEqual(['whd_1', 'whd_2'])
+    expect(requestMock.mock.calls[1]?.[1].query).toMatchObject({ cursor: 'cur_2' })
+  })
+
+  it('retryDelivery() posts to the retry endpoint for a specific delivery', async () => {
+    requestMock.mockResolvedValue(undefined)
+
+    await createWebhooksClient(config).retryDelivery('wh_1', 'whd_1')
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'POST',
+      path: '/v1/webhooks/wh_1/deliveries/whd_1/retry',
+    })
   })
 })

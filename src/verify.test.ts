@@ -1,11 +1,14 @@
-import type { ChargeStatusEvent } from '@klappay/types'
+import type { ChargeStatusEvent, VerifyCharge } from '@klappay/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createVerifyClient } from './verify'
+import { createVerifyClient, verifyCharge } from './verify'
 
 vi.mock('./sse', () => ({ streamSSEEvents: vi.fn() }))
+vi.mock('./http', () => ({ request: vi.fn() }))
 
 const { streamSSEEvents } = await import('./sse')
 const streamMock = vi.mocked(streamSSEEvents)
+const { request } = await import('./http')
+const requestMock = vi.mocked(request)
 
 const config = { baseUrl: 'https://api.example.com' }
 
@@ -17,6 +20,48 @@ const FAKE_EVENT: ChargeStatusEvent = {
   amountReceived: null,
   paidWith: [],
 }
+
+const FAKE_VERIFY_CHARGE: VerifyCharge = {
+  id: 'ch_fake',
+  amount: 10,
+  amountReceived: 0,
+  confirmedAt: null,
+  splitAddress: '0xabc',
+  payments: [],
+}
+
+describe('createVerifyClient().get()', () => {
+  beforeEach(() => {
+    requestMock.mockReset()
+    requestMock.mockResolvedValue(FAKE_VERIFY_CHARGE)
+  })
+
+  it('fetches the public verify endpoint with no auth', async () => {
+    const result = await createVerifyClient(config).get('ch_fake')
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'GET',
+      path: '/v1/verify/ch_fake',
+      auth: 'none',
+    })
+    expect(result).toEqual(FAKE_VERIFY_CHARGE)
+  })
+})
+
+describe('verifyCharge()', () => {
+  it('builds a one-off verify client from a bare baseUrl and looks up the charge', async () => {
+    requestMock.mockReset()
+    requestMock.mockResolvedValue(FAKE_VERIFY_CHARGE)
+
+    const result = await verifyCharge('ch_fake', 'https://api.example.com')
+
+    expect(requestMock).toHaveBeenCalledWith(
+      { baseUrl: 'https://api.example.com' },
+      { method: 'GET', path: '/v1/verify/ch_fake', auth: 'none' },
+    )
+    expect(result).toEqual(FAKE_VERIFY_CHARGE)
+  })
+})
 
 describe('createVerifyClient().streamEvents()', () => {
   beforeEach(() => {
