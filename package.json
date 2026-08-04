@@ -19,63 +19,63 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./charges": {
       "types": "./dist/charges.d.ts",
-      "import": "./dist/charges.mjs",
-      "require": "./dist/charges.js"
+      "import": "./dist/charges.js",
+      "require": "./dist/charges.cjs"
     },
     "./webhooks": {
       "types": "./dist/webhooks.d.ts",
-      "import": "./dist/webhooks.mjs",
-      "require": "./dist/webhooks.js"
+      "import": "./dist/webhooks.js",
+      "require": "./dist/webhooks.cjs"
     },
     "./verify": {
       "types": "./dist/verify.d.ts",
-      "import": "./dist/verify.mjs",
-      "require": "./dist/verify.js"
+      "import": "./dist/verify.js",
+      "require": "./dist/verify.cjs"
     },
     "./organization": {
       "types": "./dist/organization.d.ts",
-      "import": "./dist/organization.mjs",
-      "require": "./dist/organization.js"
+      "import": "./dist/organization.js",
+      "require": "./dist/organization.cjs"
     },
     "./users": {
       "types": "./dist/users.d.ts",
-      "import": "./dist/users.mjs",
-      "require": "./dist/users.js"
+      "import": "./dist/users.js",
+      "require": "./dist/users.cjs"
     },
     "./api-keys": {
       "types": "./dist/api-keys.d.ts",
-      "import": "./dist/api-keys.mjs",
-      "require": "./dist/api-keys.js"
+      "import": "./dist/api-keys.js",
+      "require": "./dist/api-keys.cjs"
     },
     "./invitations": {
       "types": "./dist/invitations.d.ts",
-      "import": "./dist/invitations.mjs",
-      "require": "./dist/invitations.js"
+      "import": "./dist/invitations.js",
+      "require": "./dist/invitations.cjs"
     },
     "./auth": {
       "types": "./dist/auth.d.ts",
-      "import": "./dist/auth.mjs",
-      "require": "./dist/auth.js"
+      "import": "./dist/auth.js",
+      "require": "./dist/auth.cjs"
     },
     "./sandbox": {
       "types": "./dist/sandbox.d.ts",
-      "import": "./dist/sandbox.mjs",
-      "require": "./dist/sandbox.js"
+      "import": "./dist/sandbox.js",
+      "require": "./dist/sandbox.cjs"
     },
     "./distributions": {
       "types": "./dist/distributions.d.ts",
-      "import": "./dist/distributions.mjs",
-      "require": "./dist/distributions.js"
+      "import": "./dist/distributions.js",
+      "require": "./dist/distributions.cjs"
     },
     "./networks": {
       "types": "./dist/networks.d.ts",
-      "import": "./dist/networks.mjs",
-      "require": "./dist/networks.js"
+      "import": "./dist/networks.js",
+      "require": "./dist/networks.cjs"
     }
   },
   "files": ["dist", "LICENSE", "README.md", "logo.png", "docs"],
