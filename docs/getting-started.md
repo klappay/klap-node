@@ -77,6 +77,9 @@ including what those methods actually do and how they resolve/reject.
 - [`distributions.md`](./distributions.md) — discovering and streaming
   claimable 0xSplits payouts, for keepers/bots, not a typical merchant
   integration.
+- [`networks.md`](./networks.md) — the live `(token, network)`
+  capability matrix, for building a payment-method picker instead of
+  hardcoding it.
 - [`errors.md`](./errors.md) — every error class the SDK throws, and
   when.
 - [`sandbox-testing.md`](./sandbox-testing.md) — testing your

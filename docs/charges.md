@@ -29,12 +29,32 @@ contributed so far (empty until the first one arrives), so a charge
 accepting both USDC and USDT can be confirmed by, say, $9 in USDC plus $1
 in USDT. A transfer on a pair that isn't in `acceptedPayments` is still
 recorded but never credited. Not sure which pairs are actually live for
-your environment right now? `klap.networks.get()` returns the current
-matrix — build a payment-method picker from it instead of hardcoding
-the pairs client-side; it changes as new networks/tokens come online.
+your environment right now? See [`networks.md`](./networks.md) —
+`klap.networks.get()` returns the current matrix; build a payment-method
+picker from it instead of hardcoding the pairs client-side, since it
+changes as new networks/tokens come online.
+
+`mode` defaults to `'standard'` — the usual lifecycle: accumulates
+transfers toward one resolution (`confirmed`/`expired`/`underpaid`),
+settles once. Pass `mode: 'continuous'` for a charge that never
+resolves — `status` stays `pending` for its entire life, and every
+credited transfer settles independently instead of accumulating toward
+one confirmation (a link in a creator's bio, a permanent donation/
+collection address). `continuous` requires both `amount` and
+`expiresIn` to be omitted — there's no goal to accumulate toward and no
+deadline. See [`webhooks.md`](./webhooks.md) for the
+`charge.contribution_received`/`charge.contribution_settled` events
+`continuous` charges emit per contribution instead of the usual
+`charge.confirmed`/`charge.settled`, and [`verify.md`](./verify.md) for
+how public proof-of-payment lookup differs for a `continuous` charge
+(no single `confirmedAt`).
 
 Every field is documented in `@klappay/types`' `CreateChargeSchema` — the
 SDK doesn't duplicate that documentation, it re-exports the same types.
+The parameter type is `CreateChargeRequest` (not `CreateChargeInput` —
+that's the post-parse shape, where defaulted fields like `mode`/
+`currency` are always present; `CreateChargeRequest` is what you
+actually build, where they're optional).
 
 **Idempotency**: if you don't pass `idempotencyKey`, the SDK generates
 one for you automatically. That makes every `create()` call safe to retry

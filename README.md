@@ -52,6 +52,7 @@ Full docs live at [`docs/`](https://github.com/klappay/klap-node/tree/main/docs)
 | [`docs/webhooks.md`](https://github.com/klappay/klap-node/tree/main/docs/webhooks.md) | Registering webhooks, verifying signatures, `constructEvent` |
 | [`docs/verify.md`](https://github.com/klappay/klap-node/tree/main/docs/verify.md) | Public proof-of-payment lookup — the one call needing no credential |
 | [`docs/distributions.md`](https://github.com/klappay/klap-node/tree/main/docs/distributions.md) | Discovering and streaming claimable 0xSplits payouts — for keepers/bots, not a typical merchant integration |
+| [`docs/networks.md`](https://github.com/klappay/klap-node/tree/main/docs/networks.md) | The live `(token, network)` capability matrix — build a payment-method picker instead of hardcoding it |
 | [`docs/authentication.md`](https://github.com/klappay/klap-node/tree/main/docs/authentication.md) | API key vs session token, every account/dashboard resource, and setting a default organization |
 | [`docs/errors.md`](https://github.com/klappay/klap-node/tree/main/docs/errors.md) | Every error class the SDK throws, and when |
 | [`docs/sandbox-testing.md`](https://github.com/klappay/klap-node/tree/main/docs/sandbox-testing.md) | Simulating any charge event end-to-end with no real on-chain activity |

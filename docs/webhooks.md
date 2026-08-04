@@ -29,7 +29,10 @@ names for the same thing: `confirmed` means Klap detected the payment on
 -chain; `settled` means the merchant's wallet actually received it — a
 separate, later step. Subscribe to `confirmed` if you only need "will I
 get paid," or `settled` if you need "has the money actually arrived."
-See the full event list in `@klappay/types`' `WebhookEventTypeSchema`.
+A `mode: 'continuous'` charge (see [`charges.md`](./charges.md)) never
+reaches `confirmed`/`settled` — it emits `charge.contribution_received`/
+`charge.contribution_settled` per contribution instead. See the full
+event list in `@klappay/types`' `WebhookEventTypeSchema`.
 
 ### Subscribing by category or wildcard, not just individual events
 

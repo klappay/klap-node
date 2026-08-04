@@ -103,5 +103,5 @@ depth.
 Pair this with `@klappay/cli`'s `klap listen --forward-to` and
 `klap sandbox trigger` — drive any event from your terminal while your
 own webhook handler, running on `localhost`, receives it with a real
-signature. See that package's own docs (`packages/cli/docs/listen.md`)
-for the full mechanism.
+signature. See [`@klappay/cli`](https://www.npmjs.com/package/@klappay/cli)'s
+own README for the full mechanism.
