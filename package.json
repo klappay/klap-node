@@ -1,0 +1,116 @@
+{
+  "name": "@klappay/node",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Official Node.js SDK for the Klap Core API. Import into your own backend project — this package is a library only, not runnable standalone and not for browser use (it handles secret API keys).",
+  "keywords": ["klap", "klappay", "sdk", "crypto", "payments", "web3"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/klappay/klap-node.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./charges": {
+      "types": "./dist/charges.d.ts",
+      "import": "./dist/charges.mjs",
+      "require": "./dist/charges.js"
+    },
+    "./webhooks": {
+      "types": "./dist/webhooks.d.ts",
+      "import": "./dist/webhooks.mjs",
+      "require": "./dist/webhooks.js"
+    },
+    "./verify": {
+      "types": "./dist/verify.d.ts",
+      "import": "./dist/verify.mjs",
+      "require": "./dist/verify.js"
+    },
+    "./organization": {
+      "types": "./dist/organization.d.ts",
+      "import": "./dist/organization.mjs",
+      "require": "./dist/organization.js"
+    },
+    "./users": {
+      "types": "./dist/users.d.ts",
+      "import": "./dist/users.mjs",
+      "require": "./dist/users.js"
+    },
+    "./api-keys": {
+      "types": "./dist/api-keys.d.ts",
+      "import": "./dist/api-keys.mjs",
+      "require": "./dist/api-keys.js"
+    },
+    "./invitations": {
+      "types": "./dist/invitations.d.ts",
+      "import": "./dist/invitations.mjs",
+      "require": "./dist/invitations.js"
+    },
+    "./auth": {
+      "types": "./dist/auth.d.ts",
+      "import": "./dist/auth.mjs",
+      "require": "./dist/auth.js"
+    },
+    "./sandbox": {
+      "types": "./dist/sandbox.d.ts",
+      "import": "./dist/sandbox.mjs",
+      "require": "./dist/sandbox.js"
+    },
+    "./distributions": {
+      "types": "./dist/distributions.d.ts",
+      "import": "./dist/distributions.mjs",
+      "require": "./dist/distributions.js"
+    },
+    "./networks": {
+      "types": "./dist/networks.d.ts",
+      "import": "./dist/networks.mjs",
+      "require": "./dist/networks.js"
+    }
+  },
+  "files": ["dist", "LICENSE", "README.md", "logo.png", "docs"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "test": "vitest run",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm build && changeset publish",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@klappay/types": "^1.0.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "@changesets/cli": "^2.31.1",
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "@types/node": "^20.16.0",
+    "husky": "^9.1.0",
+    "lint-staged": "^15.2.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.6"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
+  }
+}
