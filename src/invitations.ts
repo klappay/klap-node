@@ -2,13 +2,16 @@ import type {
   AcceptInvitationInput,
   AuthResponse,
   Invitation,
-  InviteUserInput,
+  InviteUserRequest,
 } from '@klappay/types'
 import { type HttpConfig, request, resolveOrganizationId } from './http'
 
 export function createInvitationsClient(config: HttpConfig) {
   return {
-    async invite(organizationId: string | undefined, input: InviteUserInput): Promise<Invitation> {
+    async invite(
+      organizationId: string | undefined,
+      input: InviteUserRequest,
+    ): Promise<Invitation> {
       const id = resolveOrganizationId(config, 'invitations.invite()', organizationId)
       return request<Invitation>(config, {
         method: 'POST',

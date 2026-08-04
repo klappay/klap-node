@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import {
-  type CreateWebhookInput,
+  type CreateWebhookRequest,
   type ListWebhookDeliveriesInput,
   PAGINATION_LIMIT_DEFAULT,
   PAGINATION_LIMIT_MAX,
@@ -70,7 +70,7 @@ export function constructWebhookEvent(
 
 export function createWebhooksClient(config: HttpConfig) {
   return {
-    async create(input: CreateWebhookInput): Promise<Webhook> {
+    async create(input: CreateWebhookRequest): Promise<Webhook> {
       return request<Webhook>(config, { method: 'POST', path: '/v1/webhooks', body: input })
     },
 

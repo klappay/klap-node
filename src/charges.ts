@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import {
   type Charge,
-  type CreateChargeInput,
+  type CreateChargeRequest,
   type ListChargesInput,
   PAGINATION_LIMIT_DEFAULT,
   PAGINATION_LIMIT_MAX,
@@ -28,7 +28,7 @@ export function createChargesClient(config: HttpConfig) {
     })
 
   return {
-    async create(input: CreateChargeInput): Promise<KlapCharge> {
+    async create(input: CreateChargeRequest): Promise<KlapCharge> {
       const charge = await request<Charge>(config, {
         method: 'POST',
         path: '/v1/charges',
