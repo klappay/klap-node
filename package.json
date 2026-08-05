@@ -57,6 +57,11 @@
       "import": "./dist/invitations.js",
       "require": "./dist/invitations.cjs"
     },
+    "./metrics": {
+      "types": "./dist/metrics.d.ts",
+      "import": "./dist/metrics.js",
+      "require": "./dist/metrics.cjs"
+    },
     "./auth": {
       "types": "./dist/auth.d.ts",
       "import": "./dist/auth.js",
@@ -96,7 +101,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@klappay/types": "^1.0.4"
+    "@klappay/types": "^1.0.5"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",

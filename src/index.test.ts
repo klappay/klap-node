@@ -14,6 +14,7 @@ describe('package public exports', () => {
     expect(sdk.createUsersClient).toBeTypeOf('function')
     expect(sdk.createApiKeysClient).toBeTypeOf('function')
     expect(sdk.createInvitationsClient).toBeTypeOf('function')
+    expect(sdk.createMetricsClient).toBeTypeOf('function')
     expect(sdk.createAuthClient).toBeTypeOf('function')
     expect(sdk.createSandboxClient).toBeTypeOf('function')
     expect(sdk.createDistributionsClient).toBeTypeOf('function')

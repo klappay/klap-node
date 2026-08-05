@@ -10,6 +10,7 @@ export default defineConfig({
     'src/users.ts',
     'src/api-keys.ts',
     'src/invitations.ts',
+    'src/metrics.ts',
     'src/auth.ts',
     'src/sandbox.ts',
     'src/distributions.ts',

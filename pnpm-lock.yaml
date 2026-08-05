@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@klappay/types':
-        specifier: ^1.0.4
-        version: 1.0.4
+        specifier: ^1.0.5
+        version: 1.0.5
     devDependencies:
       '@biomejs/biome':
         specifier: ^1.9.0
@@ -604,8 +604,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@klappay/types@1.0.4':
-    resolution: {integrity: sha512-/McwPiO4ymLW599TY11WadsD7dL3ZXR4Hcn+zO1qlWSXO3S3CAmPeFvfRUwSf4N8XRetLrd3ag1mepJCceCBtw==}
+  '@klappay/types@1.0.5':
+    resolution: {integrity: sha512-tdb6p9W6skn8oOTxKhSmpcnq7KIiPNn93tcQdTmndaI27MthJirv6HOsU+6T/ms497bp9OEylCGyiJLwzSMRTA==}
 
   '@manypkg/find-root@1.1.0':
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
@@ -2502,7 +2502,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@klappay/types@1.0.4':
+  '@klappay/types@1.0.5':
     dependencies:
       zod: 3.25.76
 

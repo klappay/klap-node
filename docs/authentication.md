@@ -7,7 +7,7 @@ different things.
 | Credential | Used for | Get one via |
 |---|---|---|
 | **API key** (`apiKey`) | `charges`, `webhooks`, `sandbox` — payment operations | Klap dashboard, or `klap.apiKeys.create(organizationId, ...)` (needs a session token) |
-| **Session token** (`sessionToken`) | `organization`, `users`, `apiKeys`, `invitations` — account/dashboard management | `klap.auth.login()` / `klap.auth.signup()` / `klap.invitations.accept()` |
+| **Session token** (`sessionToken`) | `organization`, `users`, `apiKeys`, `invitations`, `metrics` — account/dashboard management and analytics | `klap.auth.login()` / `klap.auth.signup()` / `klap.invitations.accept()` |
 
 An API key is long-lived and environment-scoped (`live`/`test`), with no
 user attached — it's what a backend integration authenticates with. A
@@ -211,3 +211,11 @@ account, it just adds the membership (`password` is ignored, and any
 other organizations that account already belongs to are untouched); if
 it doesn't, `password` is required and creates the account in the same
 step.
+
+## `klap.metrics`
+
+Ad-hoc analytics over your organization's `charges`/`transactions`/
+`distributions` data — same session-token requirement as everything
+else on this page. See [`metrics.md`](./metrics.md) for the full query
+shape (it's more involved than the resources above, so it gets its own
+page).

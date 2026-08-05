@@ -12,6 +12,7 @@ describe('createClient()', () => {
     expect(klap.users).toBeDefined()
     expect(klap.apiKeys).toBeDefined()
     expect(klap.invitations).toBeDefined()
+    expect(klap.metrics).toBeDefined()
     expect(klap.auth).toBeDefined()
     expect(klap.sandbox).toBeDefined()
     expect(klap.distributions).toBeDefined()

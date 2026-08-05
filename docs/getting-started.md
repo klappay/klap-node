@@ -80,6 +80,8 @@ including what those methods actually do and how they resolve/reject.
 - [`networks.md`](./networks.md) — the live `(token, network)`
   capability matrix, for building a payment-method picker instead of
   hardcoding it.
+- [`metrics.md`](./metrics.md) — ad-hoc analytics over your charges/
+  transactions/distributions data.
 - [`errors.md`](./errors.md) — every error class the SDK throws, and
   when.
 - [`sandbox-testing.md`](./sandbox-testing.md) — testing your

@@ -4,6 +4,7 @@ import { createChargesClient } from './charges'
 import { createDistributionsClient } from './distributions'
 import type { HttpConfig } from './http'
 import { createInvitationsClient } from './invitations'
+import { createMetricsClient } from './metrics'
 import { createNetworksClient } from './networks'
 import { createOrganizationClient } from './organization'
 import { createSandboxClient } from './sandbox'
@@ -44,6 +45,7 @@ export function createClient(options: CreateClientOptions) {
     users: createUsersClient(config),
     apiKeys: createApiKeysClient(config),
     invitations: createInvitationsClient(config),
+    metrics: createMetricsClient(config),
     auth: createAuthClient(config),
     sandbox: createSandboxClient(config),
     distributions: createDistributionsClient(config),
