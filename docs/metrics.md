@@ -63,6 +63,11 @@ A few constraints worth knowing up front:
   `groupBy` field name (or the reserved word `"bucket"`), and must
   match `^[a-zA-Z_][a-zA-Z0-9_]*$` — it becomes a SQL column alias
   server-side for a date-bucketed query.
+- `orderBy.key` must match that same `^[a-zA-Z_][a-zA-Z0-9_]*$` pattern
+  — it should already be a `groupBy` field name or a metric's alias/
+  default name, all of which are always shaped like this, so in
+  practice this only ever rejects a value that could never have been a
+  real output column to begin with.
 
 All of the above is enforced server-side regardless of what the SDK
 does client-side — `klap.metrics.query()` doesn't pre-validate before
