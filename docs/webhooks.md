@@ -34,6 +34,23 @@ reaches `confirmed`/`settled` — it emits `charge.contribution_received`/
 `charge.contribution_settled` per contribution instead. See the full
 event list in `@klappay/types`' `WebhookEventTypeSchema`.
 
+### Environment scoping
+
+`webhook.environment` (`'live' | 'test' | null`) is set automatically
+from whichever API key created it — there's no `create()` input field
+for it, and it can't be changed afterward. `null` means the webhook was
+created before this field existed, and it keeps receiving every
+environment, same as always. Most events (every `charge.*`, the
+webhook-management/delivery-health events, `api_key.created`/
+`api_key.revoked`) are only delivered to a webhook whose `environment`
+matches the event's own; the remaining account/security events
+(`member.*`, `auth.*`, `fee_tier.updated`, `payout_address.changed`)
+have no environment concept and reach every subscribed webhook
+regardless. In practice: register a webhook with each of your `live`
+and `test` API keys if you want separate endpoints/handlers per
+environment — a `test`-key webhook never receives a real `live` charge
+event, and a `live`-key webhook never receives a sandbox-triggered one.
+
 ### Subscribing by category or wildcard, not just individual events
 
 Events are grouped into four categories — `payments`, `account`,

@@ -138,6 +138,7 @@ describe('createWebhooksClient() CRUD', () => {
 
   const FAKE_WEBHOOK: Webhook = {
     id: 'wh_1',
+    environment: 'live',
     url: 'https://example.com/webhooks/klap',
     events: [],
     eventCategories: ['payments'],
