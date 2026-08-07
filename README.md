@@ -50,7 +50,7 @@ Full docs live at [`docs/`](https://github.com/klappay/klap-node/tree/main/docs)
 | [`docs/getting-started.md`](https://github.com/klappay/klap-node/tree/main/docs/getting-started.md) | Install, client setup, your first charge |
 | [`docs/charges.md`](https://github.com/klappay/klap-node/tree/main/docs/charges.md) | The core resource — create, list, paginate, `waitForConfirmation`/`waitForSettlement` in depth |
 | [`docs/webhooks.md`](https://github.com/klappay/klap-node/tree/main/docs/webhooks.md) | Registering webhooks, verifying signatures, `constructEvent` |
-| [`docs/verify.md`](https://github.com/klappay/klap-node/tree/main/docs/verify.md) | Public proof-of-payment lookup — the one call needing no credential |
+| [`docs/public-charges.md`](https://github.com/klappay/klap-node/tree/main/docs/public-charges.md) | Public, credential-less charge lookup — the one part of the SDK safe to call from a browser |
 | [`docs/distributions.md`](https://github.com/klappay/klap-node/tree/main/docs/distributions.md) | Discovering and streaming claimable 0xSplits payouts — for keepers/bots, not a typical merchant integration |
 | [`docs/networks.md`](https://github.com/klappay/klap-node/tree/main/docs/networks.md) | The live `(token, network)` capability matrix — build a payment-method picker instead of hardcoding it |
 | [`docs/authentication.md`](https://github.com/klappay/klap-node/tree/main/docs/authentication.md) | API key vs session token, every account/dashboard resource, and setting a default organization |

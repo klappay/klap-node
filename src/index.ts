@@ -7,7 +7,7 @@ export type { KlapCharge, WaitOptions } from './charges-wait'
 
 export { createWebhooksClient, verifyWebhookSignature, constructWebhookEvent } from './webhooks'
 
-export { createVerifyClient, verifyCharge } from './verify'
+export { createPublicChargesClient, getPublicCharge } from './public-charges'
 export { createOrganizationClient } from './organization'
 export { createUsersClient } from './users'
 export { createApiKeysClient } from './api-keys'
@@ -24,6 +24,7 @@ export {
   KlapApiError,
   ChargeExpiredError,
   ChargeUnderpaidError,
+  ChargeCanceledError,
   SettlementFailedError,
   WaitTimeoutError,
   InvalidWebhookSignatureError,

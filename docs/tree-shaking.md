@@ -41,11 +41,12 @@ the first place always works).
 |---|---|
 | `@klappay/node/charges` | `createChargesClient` |
 | `@klappay/node/webhooks` | `createWebhooksClient`, `verifyWebhookSignature`, `constructWebhookEvent` |
-| `@klappay/node/verify` | `createVerifyClient`, `verifyCharge` — the one resource needing no API key |
+| `@klappay/node/public-charges` | `createPublicChargesClient`, `getPublicCharge` — needs no credential at all |
 | `@klappay/node/organization` | `createOrganizationClient` |
 | `@klappay/node/users` | `createUsersClient` |
 | `@klappay/node/api-keys` | `createApiKeysClient` |
 | `@klappay/node/invitations` | `createInvitationsClient` |
+| `@klappay/node/metrics` | `createMetricsClient` |
 | `@klappay/node/auth` | `createAuthClient` |
 | `@klappay/node/sandbox` | `createSandboxClient` |
 | `@klappay/node/distributions` | `createDistributionsClient` |
@@ -59,11 +60,11 @@ of the full composed client.
 ## Verifying a webhook without any client at all
 
 `verifyWebhookSignature`/`constructWebhookEvent` (from
-`@klappay/node/webhooks`) and `verifyCharge` (from `@klappay/node/verify`)
-don't need a configured client — they're plain functions (or, for
-`verifyCharge`, take a `baseUrl` argument directly). If all you need is
-webhook signature verification, you don't need to construct a client at
-all:
+`@klappay/node/webhooks`) and `getPublicCharge` (from
+`@klappay/node/public-charges`) don't need a configured client — they're
+plain functions (or, for `getPublicCharge`, take a `baseUrl` argument
+directly). If all you need is webhook signature verification, you don't
+need to construct a client at all:
 
 ```ts
 import { verifyWebhookSignature } from '@klappay/node/webhooks'

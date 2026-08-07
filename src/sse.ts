@@ -11,9 +11,9 @@ export type SSEEvent<T> = { event: string; data: T }
  * event on the stream (`event: <name>` + `data: <json>` pairs; a
  * comment-only heartbeat `: ping` line has neither, so it's silently
  * skipped) instead of filtering for one hardcoded event name and shape.
- * Used by streams whose event name (`verify.streamEvents`) or auth
- * requirement (`auth: 'none'` for the public verify stream) differs from
- * `streamChargeEvents`' charges-specific assumptions.
+ * Used by streams whose event name (`publicCharges.streamEvents`) or
+ * auth requirement (`auth: 'none'` for the public charge stream) differs
+ * from `streamChargeEvents`' charges-specific assumptions.
  */
 export async function* streamSSEEvents<T>(
   config: HttpConfig,

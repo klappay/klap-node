@@ -5,7 +5,7 @@ export default defineConfig({
     'src/index.ts',
     'src/charges.ts',
     'src/webhooks.ts',
-    'src/verify.ts',
+    'src/public-charges.ts',
     'src/organization.ts',
     'src/users.ts',
     'src/api-keys.ts',

@@ -72,8 +72,8 @@ including what those methods actually do and how they resolve/reject.
   and every account/dashboard-management resource.
 - [`webhooks.md`](./webhooks.md) — registering webhooks, and verifying
   signatures on what you receive.
-- [`verify.md`](./verify.md) — public proof-of-payment lookup, the one
-  call that needs no credential at all.
+- [`public-charges.md`](./public-charges.md) — public, credential-less
+  charge lookup, the one part of the SDK safe to call from a browser.
 - [`distributions.md`](./distributions.md) — discovering and streaming
   claimable 0xSplits payouts, for keepers/bots, not a typical merchant
   integration.

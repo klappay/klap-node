@@ -7,9 +7,9 @@ import { createInvitationsClient } from './invitations'
 import { createMetricsClient } from './metrics'
 import { createNetworksClient } from './networks'
 import { createOrganizationClient } from './organization'
+import { createPublicChargesClient } from './public-charges'
 import { createSandboxClient } from './sandbox'
 import { createUsersClient } from './users'
-import { createVerifyClient } from './verify'
 import { createWebhooksClient } from './webhooks'
 
 export type CreateClientOptions = {
@@ -40,7 +40,7 @@ export function createClient(options: CreateClientOptions) {
   return {
     charges: createChargesClient(config),
     webhooks: createWebhooksClient(config),
-    verify: createVerifyClient(config),
+    publicCharges: createPublicChargesClient(config),
     organization: createOrganizationClient(config),
     users: createUsersClient(config),
     apiKeys: createApiKeysClient(config),

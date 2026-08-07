@@ -7,7 +7,7 @@ describe('createClient()', () => {
 
     expect(klap.charges).toBeDefined()
     expect(klap.webhooks).toBeDefined()
-    expect(klap.verify).toBeDefined()
+    expect(klap.publicCharges).toBeDefined()
     expect(klap.organization).toBeDefined()
     expect(klap.users).toBeDefined()
     expect(klap.apiKeys).toBeDefined()
