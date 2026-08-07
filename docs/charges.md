@@ -279,6 +279,11 @@ than one pair — with exactly one, it's resolved automatically:
 const svg = await klap.charges.getQrCode('ch_abc123', { token: 'USDC', network: 'base' })
 ```
 
+No API key at all in the request? See
+[`klap.publicCharges.getQrCode()`](./public-charges.md#getqrcodechargeid-environment-query)
+for the unauthenticated equivalent — same QR code, no credential
+needed.
+
 ## `watch(id, signal?)`
 
 ```ts

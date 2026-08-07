@@ -26,6 +26,31 @@ is indistinguishable from the charge not existing (`404`) — deliberate,
 so this endpoint can't be used to probe which environment an id belongs
 to.
 
+## `getQrCode(chargeId, environment, query?)`
+
+```ts
+const svg = await klap.publicCharges.getQrCode('ch_abc123', 'live')
+// raw SVG string, no API key required
+```
+
+Same EIP-681 QR code as [`klap.charges.getQrCode()`](./charges.md#getqrcodeid-query), no
+credential needed — the QR only ever encodes data already exposed by
+`get()` above (address, accepted pair, amount), so there's nothing this
+exposes that isn't already public. `query` (`{ token, network }`) is
+only required when the charge accepts more than one pair:
+
+```ts
+const svg = await klap.publicCharges.getQrCode('ch_abc123', 'live', {
+  token: 'USDC',
+  network: 'base',
+})
+```
+
+The authenticated `klap.charges.getQrCode()` isn't going away — this is
+an additional, unauthenticated option for a consumer with no API key at
+all (e.g. embedding a QR code directly in a checkout page), not a
+replacement.
+
 ## `streamEvents(chargeId, environment, signal?)`
 
 ```ts

@@ -1,4 +1,4 @@
-import type { Environment, PublicCharge } from '@klappay/types'
+import type { Environment, GetPublicChargeQrCodeQueryRequest, PublicCharge } from '@klappay/types'
 import { type HttpConfig, request } from './http'
 import { streamSSEEvents } from './sse'
 
@@ -10,6 +10,28 @@ export function createPublicChargesClient(config: Omit<HttpConfig, 'apiKey' | 's
         path: `/v1/public/charges/${chargeId}`,
         query: { environment },
         auth: 'none',
+      })
+    },
+
+    /**
+     * Same EIP-681 QR code as `klap.charges.getQrCode()`, no API key
+     * required — the QR only ever encodes data already public via
+     * `get()` above (address, accepted pair, amount), so there's
+     * nothing this exposes that isn't already exposed there. `query`
+     * (`{ token, network }`) is only required when the charge accepts
+     * more than one pair.
+     */
+    async getQrCode(
+      chargeId: string,
+      environment: Environment,
+      query?: Omit<GetPublicChargeQrCodeQueryRequest, 'environment'>,
+    ): Promise<string> {
+      return request<string>(config, {
+        method: 'GET',
+        path: `/v1/public/charges/${chargeId}/qrcode`,
+        query: { environment, ...query },
+        auth: 'none',
+        responseType: 'text',
       })
     },
 

@@ -55,6 +55,39 @@ describe('createPublicChargesClient().get()', () => {
   })
 })
 
+describe('createPublicChargesClient().getQrCode()', () => {
+  beforeEach(() => {
+    requestMock.mockReset()
+    requestMock.mockResolvedValue('<svg>...</svg>')
+  })
+
+  it('fetches the QR code as raw text, with no auth, sending only environment by default', async () => {
+    const result = await createPublicChargesClient(config).getQrCode('ch_fake', 'live')
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'GET',
+      path: '/v1/public/charges/ch_fake/qrcode',
+      query: { environment: 'live' },
+      auth: 'none',
+      responseType: 'text',
+    })
+    expect(result).toBe('<svg>...</svg>')
+  })
+
+  it('merges token/network into the query when given', async () => {
+    await createPublicChargesClient(config).getQrCode('ch_fake', 'test', {
+      token: 'USDC',
+      network: 'base',
+    })
+
+    expect(requestMock.mock.calls[0]?.[1].query).toEqual({
+      environment: 'test',
+      token: 'USDC',
+      network: 'base',
+    })
+  })
+})
+
 describe('createPublicChargesClient().streamEvents()', () => {
   beforeEach(() => {
     streamMock.mockReset()
