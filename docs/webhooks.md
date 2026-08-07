@@ -77,7 +77,8 @@ discoverability:
 
 ```ts
 klap.webhooks.categories.security
-// ['auth.login', 'auth.login_failed', 'auth.suspicious_activity']
+// ['auth.login', 'auth.login_failed', 'auth.suspicious_activity', 'auth.email_verified', ...]
+// — see @klappay/types' SecurityWebhookEventTypeSchema for the full, current list
 ```
 
 These are additive — `events` alone (the first example above) keeps
@@ -132,10 +133,13 @@ timing attacks are a real risk), checks that the delivery is recent
 (`options.toleranceSeconds`, default 300 — 5 minutes), and parses the
 body into `TypedWebhookPayload` — a discriminated union keyed by
 `event`, so `data` narrows automatically in a `switch`/`if` on `event`
-(same pattern as Stripe's `Event.data.object`). Charge events
-(`charge.*`) carry the full `Charge` object; every other category
-carries a smaller, event-specific object — see `WebhookEventDataMap` in
-`@klappay/types` for the exact shape per event. Throws
+(same pattern as Stripe's `Event.data.object`). Most `charge.*` events
+carry the full `Charge` object — the exceptions are `charge.paused`/
+`charge.reactivated`/`charge.contribution_received`/
+`charge.contribution_settled`/`charge.paid_after_cancel`, which (like
+every non-charge event) carry their own smaller, event-specific object
+instead — see `WebhookEventDataMap` in `@klappay/types` for the exact
+shape per event. Throws
 `InvalidWebhookSignatureError` if the HMAC doesn't match, or
 `WebhookTimestampToleranceError` if the signature is valid but the
 timestamp is outside the tolerance window (a strong signal of a replayed

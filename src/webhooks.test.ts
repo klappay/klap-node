@@ -87,6 +87,36 @@ describe('constructWebhookEvent', () => {
     }
   })
 
+  it('narrows charge.canceled to the full Charge data shape', () => {
+    const payload = {
+      id: 'evt_3',
+      event: 'charge.canceled',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      data: { id: 'ch_1', status: 'canceled', canceledAt: '2026-01-01T00:00:00.000Z' },
+    }
+    const body = JSON.stringify(payload)
+    const parsed = constructWebhookEvent(body, sign(body), SECRET)
+    expect(parsed.event).toBe('charge.canceled')
+    if (parsed.event === 'charge.canceled') {
+      expect(parsed.data.status).toBe('canceled')
+    }
+  })
+
+  it('narrows auth.email_changed to its own smaller data shape', () => {
+    const payload = {
+      id: 'evt_4',
+      event: 'auth.email_changed',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      data: { userId: 'usr_1', previousEmail: 'old@example.com', newEmail: 'new@example.com' },
+    }
+    const body = JSON.stringify(payload)
+    const parsed = constructWebhookEvent(body, sign(body), SECRET)
+    expect(parsed.event).toBe('auth.email_changed')
+    if (parsed.event === 'auth.email_changed') {
+      expect(parsed.data.newEmail).toBe('new@example.com')
+    }
+  })
+
   it('throws InvalidWebhookSignatureError on a bad signature', () => {
     const body = JSON.stringify(chargePayload)
     expect(() => constructWebhookEvent(body, sign(body, 'wrong-secret'), SECRET)).toThrow(
@@ -126,6 +156,17 @@ describe('createWebhooksClient().categories', () => {
 
   it('lists auth.suspicious_activity under security', () => {
     expect(categories.security).toContain('auth.suspicious_activity')
+  })
+
+  it('lists the self-service account-change events under security', () => {
+    expect(categories.security).toContain('auth.password_changed')
+    expect(categories.security).toContain('auth.email_change_requested')
+    expect(categories.security).toContain('auth.email_changed')
+  })
+
+  it('lists charge.canceled and charge.paid_after_cancel under payments', () => {
+    expect(categories.payments).toContain('charge.canceled')
+    expect(categories.payments).toContain('charge.paid_after_cancel')
   })
 
   it('lists webhook.delivery_failed under webhooks', () => {
