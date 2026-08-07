@@ -32,10 +32,10 @@
       "import": "./dist/webhooks.js",
       "require": "./dist/webhooks.cjs"
     },
-    "./verify": {
-      "types": "./dist/verify.d.ts",
-      "import": "./dist/verify.js",
-      "require": "./dist/verify.cjs"
+    "./public-charges": {
+      "types": "./dist/public-charges.d.ts",
+      "import": "./dist/public-charges.js",
+      "require": "./dist/public-charges.cjs"
     },
     "./organization": {
       "types": "./dist/organization.d.ts",
@@ -101,7 +101,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@klappay/types": "^1.0.7"
+    "@klappay/types": "^1.1.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
