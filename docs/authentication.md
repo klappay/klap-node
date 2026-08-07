@@ -122,6 +122,42 @@ just the one you're currently holding — an already-authenticated client
 built with the old `sessionToken` will start getting `401` and needs a
 fresh `klap.auth.login()`.
 
+### Changing your own name, password, and email
+
+```ts
+const self = await klap.auth.updateName({ name: 'Ada Lovelace' })
+```
+
+```ts
+const { token, user } = await klap.auth.changePassword({
+  currentPassword: 'old-password',
+  newPassword: 'new-password',
+})
+// old sessionToken goes stale immediately — build a new client with this fresh token
+```
+
+```ts
+await klap.auth.changeEmail({ currentPassword, newEmail: 'new@example.com' })
+// sends a confirmation link to your CURRENT address, not the new one
+
+await klap.auth.confirmEmailChange(token) // token from that email
+```
+
+All four require `sessionToken`. `updateName()` returns `SelfUser` (the
+same pure-identity shape `signup`/`login`'s `user` field has).
+`changePassword()` returns a fresh `AuthResponse` for the same reason
+`resetPassword()` invalidates old sessions — the old token stops working
+the instant the password changes. `changeEmail()`/`confirmEmailChange()`
+is a two-step flow deliberately routed through your **current** inbox,
+not the new one: `changeEmail()` requires `currentPassword` and emails a
+confirmation link to the address you're changing *from*, so an attacker
+who only has your session token (not your password or current inbox)
+can't hijack the account by pointing it at an address they control.
+Applying the change resets `emailVerifiedAt` on the new address and
+auto-sends it a fresh verification email; a notice also goes to the
+previous address. Both `changePassword`/`changeEmail` reject a wrong
+`currentPassword` with `KlapApiError` (`403 invalid_current_password`).
+
 ## `klap.organization`
 
 ```ts

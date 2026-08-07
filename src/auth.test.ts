@@ -1,4 +1,4 @@
-import type { AuthResponse, MessageResponse } from '@klappay/types'
+import type { AuthResponse, MessageResponse, SelfUser } from '@klappay/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAuthClient } from './auth'
 
@@ -106,6 +106,72 @@ describe('createAuthClient()', () => {
       method: 'POST',
       path: '/v1/auth/reset-password',
       body: { token: 'reset_token', newPassword: 'newpassword123' },
+      auth: 'none',
+    })
+  })
+
+  it('updateName() patches /auth/me with sessionToken auth', async () => {
+    const FAKE_SELF_USER: SelfUser = {
+      id: 'usr_1',
+      email: 'a@example.com',
+      name: 'Ada',
+      emailVerifiedAt: null,
+    }
+    requestMock.mockResolvedValue(FAKE_SELF_USER)
+
+    const result = await createAuthClient(config).updateName({ name: 'Ada' })
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'PATCH',
+      path: '/v1/auth/me',
+      body: { name: 'Ada' },
+      auth: 'sessionToken',
+    })
+    expect(result).toEqual(FAKE_SELF_USER)
+  })
+
+  it('changePassword() posts to /auth/change-password with sessionToken auth and returns a fresh AuthResponse', async () => {
+    requestMock.mockResolvedValue(FAKE_AUTH_RESPONSE)
+
+    const result = await createAuthClient(config).changePassword({
+      currentPassword: 'oldpassword123',
+      newPassword: 'newpassword123',
+    })
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'POST',
+      path: '/v1/auth/change-password',
+      body: { currentPassword: 'oldpassword123', newPassword: 'newpassword123' },
+      auth: 'sessionToken',
+    })
+    expect(result).toEqual(FAKE_AUTH_RESPONSE)
+  })
+
+  it('changeEmail() posts to /auth/change-email with sessionToken auth', async () => {
+    requestMock.mockResolvedValue(FAKE_MESSAGE)
+
+    await createAuthClient(config).changeEmail({
+      currentPassword: 'password123',
+      newEmail: 'new@example.com',
+    })
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'POST',
+      path: '/v1/auth/change-email',
+      body: { currentPassword: 'password123', newEmail: 'new@example.com' },
+      auth: 'sessionToken',
+    })
+  })
+
+  it('confirmEmailChange() posts the token as the body with no auth required', async () => {
+    requestMock.mockResolvedValue(FAKE_MESSAGE)
+
+    await createAuthClient(config).confirmEmailChange('change_token')
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'POST',
+      path: '/v1/auth/confirm-email-change',
+      body: { token: 'change_token' },
       auth: 'none',
     })
   })
