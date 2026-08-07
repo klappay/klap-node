@@ -32,6 +32,16 @@ export class ChargeUnderpaidError extends Error {
   }
 }
 
+export class ChargeCanceledError extends Error {
+  readonly chargeId: string
+
+  constructor(chargeId: string) {
+    super(`Charge ${chargeId} was canceled before it was paid.`)
+    this.name = 'ChargeCanceledError'
+    this.chargeId = chargeId
+  }
+}
+
 export class SettlementFailedError extends Error {
   readonly chargeId: string
 

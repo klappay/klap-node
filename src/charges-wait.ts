@@ -1,5 +1,6 @@
 import type { Charge, TriggerableChargeEvent } from '@klappay/types'
 import {
+  ChargeCanceledError,
   ChargeExpiredError,
   ChargeUnderpaidError,
   SettlementFailedError,
@@ -164,6 +165,7 @@ export function wrapCharge(config: HttpConfig, charge: Charge): KlapCharge {
         if (c.status === 'confirmed') return { done: true, result: c }
         if (c.status === 'expired') throw new ChargeExpiredError(charge.id)
         if (c.status === 'underpaid') throw new ChargeUnderpaidError(charge.id)
+        if (c.status === 'canceled') throw new ChargeCanceledError(charge.id)
         return { done: false }
       })
     },

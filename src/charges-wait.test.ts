@@ -2,6 +2,7 @@ import type { Charge, TriggerableChargeEvent } from '@klappay/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createChargesClient } from './charges'
 import {
+  ChargeCanceledError,
   ChargeExpiredError,
   ChargeUnderpaidError,
   SettlementFailedError,
@@ -40,6 +41,7 @@ const FAKE_CHARGE: Charge = {
   settledAt: null,
   lastActivityAt: '2026-01-01T00:00:00.000Z',
   pausedAt: null,
+  canceledAt: null,
 }
 
 const config = { baseUrl: 'https://api.example.com', apiKey: 'klap_test_key' }
@@ -184,6 +186,20 @@ describe('waitForConfirmation() via polling (no apiKey configured)', () => {
 
     await expect(charge.waitForConfirmation({ pollIntervalMs: 5 })).rejects.toThrow(
       ChargeUnderpaidError,
+    )
+  })
+
+  it('throws ChargeCanceledError if the charge is canceled while waiting to confirm', async () => {
+    requestMock.mockResolvedValueOnce(FAKE_CHARGE)
+    const charge = await createChargesClient(configNoApiKey).get('ch_fake')
+    requestMock.mockResolvedValueOnce({
+      ...FAKE_CHARGE,
+      status: 'canceled',
+      canceledAt: '2026-01-01T00:30:00.000Z',
+    })
+
+    await expect(charge.waitForConfirmation({ pollIntervalMs: 5 })).rejects.toThrow(
+      ChargeCanceledError,
     )
   })
 

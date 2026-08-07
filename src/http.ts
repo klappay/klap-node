@@ -22,6 +22,8 @@ export type RequestOptions = {
   body?: unknown
   query?: Record<string, QueryValue>
   auth?: 'apiKey' | 'sessionToken' | 'none'
+  /** Default `'json'`. Set to `'text'` for a non-JSON success response (e.g. raw SVG). Error responses are always JSON regardless. */
+  responseType?: 'json' | 'text'
 }
 
 function buildUrl(baseUrl: string, path: string, query?: Record<string, QueryValue>): string {
@@ -82,9 +84,8 @@ export async function request<T>(config: HttpConfig, options: RequestOptions): P
 
   if (res.status === 204) return undefined as T
 
-  const data = (await res.json()) as unknown
-
   if (!res.ok) {
+    const data = (await res.json()) as unknown
     const parsed = ErrorPayloadSchema.safeParse(data)
     const error = parsed.success ? parsed.data.error : undefined
     throw new KlapApiError(
@@ -95,5 +96,7 @@ export async function request<T>(config: HttpConfig, options: RequestOptions): P
     )
   }
 
-  return data as T
+  if (options.responseType === 'text') return (await res.text()) as T
+
+  return (await res.json()) as T
 }

@@ -38,6 +38,7 @@ see [`charges.md`](./charges.md) for the full behavior.
 |---|---|
 | `ChargeExpiredError` | `waitForConfirmation()` — the charge's `status` reached `expired` (nobody paid before `expiresAt`) |
 | `ChargeUnderpaidError` | `waitForConfirmation()` — the charge's `status` reached `underpaid` (partial payment, then `expiresAt` passed) |
+| `ChargeCanceledError` | `waitForConfirmation()` — the merchant called `klap.charges.cancel()` while the wait was in progress |
 | `SettlementFailedError` | `waitForSettlement()` — `settlementStatus` reached `failed` (retries exhausted; rare, contact support) |
 | `WaitTimeoutError` | Either method — the `timeoutMs` elapsed before a terminal state was reached |
 
@@ -45,13 +46,19 @@ Each carries a `chargeId` property. `WaitTimeoutError` also carries the
 `timeoutMs` that was configured.
 
 ```ts
-import { ChargeExpiredError, ChargeUnderpaidError, WaitTimeoutError } from '@klappay/node'
+import {
+  ChargeExpiredError,
+  ChargeUnderpaidError,
+  ChargeCanceledError,
+  WaitTimeoutError,
+} from '@klappay/node'
 
 try {
   await charge.waitForConfirmation({ timeoutMs: 60_000 })
 } catch (err) {
   if (err instanceof ChargeExpiredError) { /* nobody paid */ }
   else if (err instanceof ChargeUnderpaidError) { /* partial payment only */ }
+  else if (err instanceof ChargeCanceledError) { /* merchant canceled it mid-wait */ }
   else if (err instanceof WaitTimeoutError) { /* still pending, keep checking later */ }
   else throw err
 }

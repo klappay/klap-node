@@ -197,4 +197,31 @@ describe('request()', () => {
 
     timeoutSpy.mockRestore()
   })
+
+  it('returns raw text instead of JSON-parsing when responseType is "text"', async () => {
+    fetchMock.mockResolvedValue(new Response('<svg>...</svg>', { status: 200 }))
+
+    const result = await request(
+      { ...baseConfig, apiKey: 'k' },
+      { method: 'GET', path: '/v1/x', responseType: 'text' },
+    )
+
+    expect(result).toBe('<svg>...</svg>')
+  })
+
+  it('still JSON-parses an error response even when responseType is "text"', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({ error: { code: 'charge_not_found', message: 'No such charge' } }),
+        { status: 404 },
+      ),
+    )
+
+    await expect(
+      request(
+        { ...baseConfig, apiKey: 'k' },
+        { method: 'GET', path: '/v1/x', responseType: 'text' },
+      ),
+    ).rejects.toMatchObject({ status: 404, code: 'charge_not_found' })
+  })
 })

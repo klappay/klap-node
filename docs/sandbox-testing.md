@@ -42,6 +42,23 @@ be `partially_paid`); triggering one out of order rejects with a
 standalone state — it always fires alongside `charge.confirmed`, same as
 a real overpayment detected on-chain.
 
+## Cancellation is not sandbox-triggerable
+
+`charge.canceled`/`charge.paid_after_cancel` are deliberately excluded
+from `klap.sandbox.trigger()`'s event set — cancellation is already a
+real, immediate action, even against a `test` key, via
+`klap.charges.cancel(chargeId)` itself:
+
+```ts
+await klap.charges.cancel(charge.id)
+const canceled = await charge.waitFor('charge.confirmed', { timeoutMs: 5_000 }).catch(() => null)
+// or just check charge.status directly after cancel() resolves
+```
+
+There's nothing to simulate — call the real endpoint. `charge.paid_after_cancel`
+similarly can't be simulated, since it requires a real transfer landing
+on an already-canceled charge's address.
+
 ## Simulating account, security, and webhook-delivery events
 
 Events that aren't tied to any charge — `payout_address.changed`,

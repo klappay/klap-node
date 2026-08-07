@@ -36,6 +36,7 @@ const FAKE_CHARGE: Charge = {
   settledAt: null,
   lastActivityAt: '2026-01-01T00:00:00.000Z',
   pausedAt: null,
+  canceledAt: null,
 }
 
 describe('createChargesClient().create()', () => {
@@ -166,6 +167,53 @@ describe('createChargesClient().getTimeline()', () => {
       path: '/v1/charges/ch_1/timeline',
     })
     expect(result).toEqual(events)
+  })
+})
+
+describe('createChargesClient().cancel()', () => {
+  beforeEach(() => {
+    requestMock.mockReset()
+    requestMock.mockResolvedValue({
+      ...FAKE_CHARGE,
+      status: 'canceled',
+      canceledAt: '2026-01-01T02:00:00.000Z',
+    })
+  })
+
+  it('posts to the cancel endpoint and returns a wrapped KlapCharge', async () => {
+    const result = await createChargesClient(config).cancel('ch_fake')
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'POST',
+      path: '/v1/charges/ch_fake/cancel',
+    })
+    expect(result.status).toBe('canceled')
+    expect(result.waitForConfirmation).toBeTypeOf('function')
+  })
+})
+
+describe('createChargesClient().getQrCode()', () => {
+  beforeEach(() => {
+    requestMock.mockReset()
+    requestMock.mockResolvedValue('<svg>...</svg>')
+  })
+
+  it('fetches the QR code as raw text, omitting the query entirely when none is given', async () => {
+    const result = await createChargesClient(config).getQrCode('ch_fake')
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'GET',
+      path: '/v1/charges/ch_fake/qrcode',
+      query: undefined,
+      responseType: 'text',
+    })
+    expect(result).toBe('<svg>...</svg>')
+  })
+
+  it('passes token/network when the charge accepts more than one pair', async () => {
+    await createChargesClient(config).getQrCode('ch_fake', { token: 'USDC', network: 'base' })
+
+    expect(requestMock.mock.calls[0]?.[1].query).toEqual({ token: 'USDC', network: 'base' })
   })
 })
 

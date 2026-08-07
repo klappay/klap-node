@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ChargeCanceledError,
   ChargeExpiredError,
   ChargeUnderpaidError,
   InvalidWebhookSignatureError,
@@ -42,6 +43,15 @@ describe('ChargeUnderpaidError', () => {
     expect(err.name).toBe('ChargeUnderpaidError')
     expect(err.chargeId).toBe('ch_2')
     expect(err.message).toBe('Charge ch_2 expired while only partially paid.')
+  })
+})
+
+describe('ChargeCanceledError', () => {
+  it('names the charge in its message', () => {
+    const err = new ChargeCanceledError('ch_2b')
+    expect(err.name).toBe('ChargeCanceledError')
+    expect(err.chargeId).toBe('ch_2b')
+    expect(err.message).toBe('Charge ch_2b was canceled before it was paid.')
   })
 })
 
