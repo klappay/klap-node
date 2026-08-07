@@ -1,14 +1,13 @@
-import type { Environment, GetPublicChargeQrCodeQueryRequest, PublicCharge } from '@klappay/types'
+import type { GetChargeQrCodeQueryRequest, PublicCharge } from '@klappay/types'
 import { type HttpConfig, request } from './http'
 import { streamSSEEvents } from './sse'
 
 export function createPublicChargesClient(config: Omit<HttpConfig, 'apiKey' | 'sessionToken'>) {
   return {
-    async get(chargeId: string, environment: Environment): Promise<PublicCharge> {
+    async get(chargeId: string): Promise<PublicCharge> {
       return request<PublicCharge>(config, {
         method: 'GET',
         path: `/v1/public/charges/${chargeId}`,
-        query: { environment },
         auth: 'none',
       })
     },
@@ -21,15 +20,11 @@ export function createPublicChargesClient(config: Omit<HttpConfig, 'apiKey' | 's
      * (`{ token, network }`) is only required when the charge accepts
      * more than one pair.
      */
-    async getQrCode(
-      chargeId: string,
-      environment: Environment,
-      query?: Omit<GetPublicChargeQrCodeQueryRequest, 'environment'>,
-    ): Promise<string> {
+    async getQrCode(chargeId: string, query?: GetChargeQrCodeQueryRequest): Promise<string> {
       return request<string>(config, {
         method: 'GET',
         path: `/v1/public/charges/${chargeId}/qrcode`,
-        query: { environment, ...query },
+        query,
         auth: 'none',
         responseType: 'text',
       })
@@ -42,12 +37,11 @@ export function createPublicChargesClient(config: Omit<HttpConfig, 'apiKey' | 's
      */
     async *streamEvents(
       chargeId: string,
-      environment: Environment,
       signal: AbortSignal = new AbortController().signal,
     ): AsyncGenerator<PublicCharge> {
       const events = streamSSEEvents<PublicCharge>(
         config,
-        `/v1/public/charges/${chargeId}/events?environment=${environment}`,
+        `/v1/public/charges/${chargeId}/events`,
         signal,
         { auth: 'none' },
       )
@@ -58,10 +52,6 @@ export function createPublicChargesClient(config: Omit<HttpConfig, 'apiKey' | 's
   }
 }
 
-export async function getPublicCharge(
-  chargeId: string,
-  environment: Environment,
-  baseUrl: string,
-): Promise<PublicCharge> {
-  return createPublicChargesClient({ baseUrl }).get(chargeId, environment)
+export async function getPublicCharge(chargeId: string, baseUrl: string): Promise<PublicCharge> {
+  return createPublicChargesClient({ baseUrl }).get(chargeId)
 }

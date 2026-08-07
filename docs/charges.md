@@ -280,7 +280,7 @@ const svg = await klap.charges.getQrCode('ch_abc123', { token: 'USDC', network: 
 ```
 
 No API key at all in the request? See
-[`klap.publicCharges.getQrCode()`](./public-charges.md#getqrcodechargeid-environment-query)
+[`klap.publicCharges.getQrCode()`](./public-charges.md#getqrcodechargeid-query)
 for the unauthenticated equivalent — same QR code, no credential
 needed.
 

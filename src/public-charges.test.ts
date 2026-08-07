@@ -42,16 +42,16 @@ describe('createPublicChargesClient().get()', () => {
     requestMock.mockResolvedValue(FAKE_PUBLIC_CHARGE)
   })
 
-  it('fetches the public charge endpoint with the required environment query param and no auth', async () => {
-    const result = await createPublicChargesClient(config).get('ch_fake', 'live')
+  it('fetches the public charge endpoint by id alone, with no query and no auth', async () => {
+    const result = await createPublicChargesClient(config).get('ch_fake')
 
     expect(requestMock).toHaveBeenCalledWith(config, {
       method: 'GET',
       path: '/v1/public/charges/ch_fake',
-      query: { environment: 'live' },
       auth: 'none',
     })
     expect(result).toEqual(FAKE_PUBLIC_CHARGE)
+    expect(result.environment).toBe('test')
   })
 })
 
@@ -61,30 +61,26 @@ describe('createPublicChargesClient().getQrCode()', () => {
     requestMock.mockResolvedValue('<svg>...</svg>')
   })
 
-  it('fetches the QR code as raw text, with no auth, sending only environment by default', async () => {
-    const result = await createPublicChargesClient(config).getQrCode('ch_fake', 'live')
+  it('fetches the QR code as raw text, with no auth and no query when none is given', async () => {
+    const result = await createPublicChargesClient(config).getQrCode('ch_fake')
 
     expect(requestMock).toHaveBeenCalledWith(config, {
       method: 'GET',
       path: '/v1/public/charges/ch_fake/qrcode',
-      query: { environment: 'live' },
+      query: undefined,
       auth: 'none',
       responseType: 'text',
     })
     expect(result).toBe('<svg>...</svg>')
   })
 
-  it('merges token/network into the query when given', async () => {
-    await createPublicChargesClient(config).getQrCode('ch_fake', 'test', {
+  it('passes token/network through when given', async () => {
+    await createPublicChargesClient(config).getQrCode('ch_fake', {
       token: 'USDC',
       network: 'base',
     })
 
-    expect(requestMock.mock.calls[0]?.[1].query).toEqual({
-      environment: 'test',
-      token: 'USDC',
-      network: 'base',
-    })
+    expect(requestMock.mock.calls[0]?.[1].query).toEqual({ token: 'USDC', network: 'base' })
   })
 })
 
@@ -93,16 +89,16 @@ describe('createPublicChargesClient().streamEvents()', () => {
     streamMock.mockReset()
   })
 
-  it('requires no auth and puts environment on the query string', async () => {
+  it('requires no auth and streams the plain by-id events path', async () => {
     streamMock.mockImplementation(async function* () {
       yield { event: 'charge', data: FAKE_PUBLIC_CHARGE }
     })
 
-    for await (const _charge of createPublicChargesClient(config).streamEvents('ch_fake', 'test')) {
+    for await (const _charge of createPublicChargesClient(config).streamEvents('ch_fake')) {
       // drain
     }
 
-    expect(streamMock.mock.calls[0]?.[1]).toBe('/v1/public/charges/ch_fake/events?environment=test')
+    expect(streamMock.mock.calls[0]?.[1]).toBe('/v1/public/charges/ch_fake/events')
     expect(streamMock.mock.calls[0]?.[3]).toEqual({ auth: 'none' })
   })
 
@@ -113,7 +109,7 @@ describe('createPublicChargesClient().streamEvents()', () => {
     })
 
     const charges: PublicCharge[] = []
-    for await (const charge of createPublicChargesClient(config).streamEvents('ch_fake', 'live')) {
+    for await (const charge of createPublicChargesClient(config).streamEvents('ch_fake')) {
       charges.push(charge)
     }
 
@@ -126,14 +122,13 @@ describe('getPublicCharge()', () => {
     requestMock.mockReset()
     requestMock.mockResolvedValue(FAKE_PUBLIC_CHARGE)
 
-    const result = await getPublicCharge('ch_fake', 'live', 'https://api.example.com')
+    const result = await getPublicCharge('ch_fake', 'https://api.example.com')
 
     expect(requestMock).toHaveBeenCalledWith(
       { baseUrl: 'https://api.example.com' },
       {
         method: 'GET',
         path: '/v1/public/charges/ch_fake',
-        query: { environment: 'live' },
         auth: 'none',
       },
     )
