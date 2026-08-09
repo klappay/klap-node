@@ -34,25 +34,11 @@ describe('streamSSEEvents', () => {
     ])
   })
 
-  it('throws MissingCredentialError when apiKey auth is required but missing', async () => {
+  it('throws MissingCredentialError when no apiKey is configured', async () => {
     const config = { baseUrl: 'https://api.example.com' }
     const iterator = streamSSEEvents(config, '/v1/foo', new AbortController().signal)
 
     await expect(iterator.next()).rejects.toThrow(MissingCredentialError)
-  })
-
-  it('sends no Authorization header when auth is explicitly none, even with no apiKey configured', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(fakeSseResponse(''))
-    vi.stubGlobal('fetch', fetchMock)
-
-    const config = { baseUrl: 'https://api.example.com' }
-    const iterator = streamSSEEvents(config, '/v1/foo', new AbortController().signal, {
-      auth: 'none',
-    })
-    await iterator.next()
-
-    const requestInit = fetchMock.mock.calls[0]?.[1] as { headers: Record<string, string> }
-    expect(requestInit.headers.Authorization).toBeUndefined()
   })
 
   it('throws a plain Error when the connection is not ok or has no body', async () => {

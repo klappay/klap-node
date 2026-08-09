@@ -1,6 +1,5 @@
 import type { Charge, TriggerableChargeEvent } from '@klappay/types'
 import {
-  ChargeCanceledError,
   ChargeExpiredError,
   ChargeUnderpaidError,
   SettlementFailedError,
@@ -98,7 +97,11 @@ async function waitViaSse(
   const timeoutId = setTimeout(() => controller.abort(), Math.max(deadline - Date.now(), 0))
   const onExternalAbort = () => controller.abort(options.signal?.reason)
   options.signal?.addEventListener('abort', onExternalAbort, { once: true })
-  const iterator = streamChargeEvents(config, `/v1/charges/${chargeId}/events`, controller.signal)
+  const iterator = streamChargeEvents(
+    config,
+    `/v1/charges/${encodeURIComponent(chargeId)}/events`,
+    controller.signal,
+  )
 
   try {
     for (;;) {
@@ -137,7 +140,10 @@ async function waitViaPolling(
 
   for (;;) {
     options.signal?.throwIfAborted()
-    const charge = await request<Charge>(config, { method: 'GET', path: `/v1/charges/${chargeId}` })
+    const charge = await request<Charge>(config, {
+      method: 'GET',
+      path: `/v1/charges/${encodeURIComponent(chargeId)}`,
+    })
     options.onStatusChange?.(charge)
 
     const outcome = check(charge)
@@ -156,7 +162,7 @@ export function wrapCharge(config: HttpConfig, charge: Charge): KlapCharge {
     async refresh() {
       const fresh = await request<Charge>(config, {
         method: 'GET',
-        path: `/v1/charges/${charge.id}`,
+        path: `/v1/charges/${encodeURIComponent(charge.id)}`,
       })
       return wrapCharge(config, fresh)
     },
@@ -165,7 +171,6 @@ export function wrapCharge(config: HttpConfig, charge: Charge): KlapCharge {
         if (c.status === 'confirmed') return { done: true, result: c }
         if (c.status === 'expired') throw new ChargeExpiredError(charge.id)
         if (c.status === 'underpaid') throw new ChargeUnderpaidError(charge.id)
-        if (c.status === 'canceled') throw new ChargeCanceledError(charge.id)
         return { done: false }
       })
     },

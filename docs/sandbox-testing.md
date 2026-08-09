@@ -1,9 +1,8 @@
 # Testing your integration
 
-Requires a `test`-environment API key (`klap_test_...`, created with
-`environment: 'test'` on `klap.apiKeys.create()`). `live` keys don't have
-access to `klap.sandbox`, and a `test` key can only ever act on a `test`
-charge — not a `live` one, even in the same organization.
+Requires a `test`-environment API key (`klap_test_...`). `live` keys
+don't have access to `klap.sandbox`, and a `test` key can only ever act
+on a `test` charge — not a `live` one, even in the same organization.
 
 ## Simulating any event
 
@@ -11,6 +10,7 @@ charge — not a `live` one, even in the same organization.
 const charge = await klap.charges.create({
   amount: 10,
   acceptedPayments: [{ token: 'USDC', network: 'base' }],
+  expiresIn: 3600,
 })
 
 // instead of waiting for a real on-chain transfer:
@@ -40,44 +40,10 @@ charge's current state (e.g. `underpay()` requires the charge to already
 be `partially_paid`); triggering one out of order rejects with a
 `KlapApiError` (`code: 'invalid_trigger_state'`). `overpay()` isn't a
 standalone state — it always fires alongside `charge.confirmed`, same as
-a real overpayment detected on-chain.
-
-## Cancellation is not sandbox-triggerable
-
-`charge.canceled`/`charge.paid_after_cancel` are deliberately excluded
-from `klap.sandbox.trigger()`'s event set — cancellation is already a
-real, immediate action, even against a `test` key, via
-`klap.charges.cancel(chargeId)` itself:
-
-```ts
-await klap.charges.cancel(charge.id)
-const canceled = await charge.waitFor('charge.confirmed', { timeoutMs: 5_000 }).catch(() => null)
-// or just check charge.status directly after cancel() resolves
-```
-
-There's nothing to simulate — call the real endpoint. `charge.paid_after_cancel`
-similarly can't be simulated, since it requires a real transfer landing
-on an already-canceled charge's address.
-
-## Simulating account, security, and webhook-delivery events
-
-Events that aren't tied to any charge — `payout_address.changed`,
-`api_key.created`/`revoked`, `fee_tier.updated`, `auth.login`/
-`auth.login_failed`/`auth.suspicious_activity`,
-`webhook.delivery_failed`/`delivery_recovered`/`endpoint_unhealthy`,
-`member.removed`/`role_changed` — have their own primitive, since there's
-no charge (or any real precondition) to act on:
-
-```ts
-await klap.sandbox.triggerEvent('auth.suspicious_activity')
-```
-
-This dispatches the event to your subscribed webhooks with synthetic
-data matching the real payload shape (see `WebhookEventDataMap` in
-`@klappay/types`) — useful for exercising webhook handler code paths that
-are otherwise rare or hard to reproduce on demand, like
-`webhook.endpoint_unhealthy`. Requires a `test` API key, same as
-`klap.sandbox.trigger()`.
+a real overpayment detected on-chain. This is the only sandbox trigger
+endpoint — webhook-delivery-health events (`webhook.delivery_failed`,
+etc.) are derived from real delivery attempts and have no simulated
+trigger of their own.
 
 ## A full integration test
 
@@ -89,6 +55,7 @@ block times:
 const charge = await klap.charges.create({
   amount: 10,
   acceptedPayments: [{ token: 'USDC', network: 'base' }],
+  expiresIn: 3600,
 })
 
 const [confirmed] = await Promise.all([

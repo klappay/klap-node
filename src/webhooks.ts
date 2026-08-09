@@ -79,13 +79,16 @@ export function createWebhooksClient(config: HttpConfig) {
     },
 
     async delete(id: string): Promise<void> {
-      return request<void>(config, { method: 'DELETE', path: `/v1/webhooks/${id}` })
+      return request<void>(config, {
+        method: 'DELETE',
+        path: `/v1/webhooks/${encodeURIComponent(id)}`,
+      })
     },
 
     async rotateSecret(id: string): Promise<Webhook> {
       return request<Webhook>(config, {
         method: 'POST',
-        path: `/v1/webhooks/${id}/rotate-secret`,
+        path: `/v1/webhooks/${encodeURIComponent(id)}/rotate-secret`,
       })
     },
 
@@ -95,7 +98,7 @@ export function createWebhooksClient(config: HttpConfig) {
     ) {
       return request<PaginatedWebhookDeliveries>(config, {
         method: 'GET',
-        path: `/v1/webhooks/${id}/deliveries`,
+        path: `/v1/webhooks/${encodeURIComponent(id)}/deliveries`,
         query: input,
       })
     },
@@ -105,7 +108,7 @@ export function createWebhooksClient(config: HttpConfig) {
       for (;;) {
         const page = await request<PaginatedWebhookDeliveries>(config, {
           method: 'GET',
-          path: `/v1/webhooks/${id}/deliveries`,
+          path: `/v1/webhooks/${encodeURIComponent(id)}/deliveries`,
           query: { limit: PAGINATION_LIMIT_MAX, cursor },
         })
         for (const delivery of page.data) yield delivery
@@ -117,7 +120,7 @@ export function createWebhooksClient(config: HttpConfig) {
     async retryDelivery(id: string, deliveryId: string): Promise<void> {
       return request<void>(config, {
         method: 'POST',
-        path: `/v1/webhooks/${id}/deliveries/${deliveryId}/retry`,
+        path: `/v1/webhooks/${encodeURIComponent(id)}/deliveries/${encodeURIComponent(deliveryId)}/retry`,
       })
     },
 

@@ -32,40 +32,10 @@
       "import": "./dist/webhooks.js",
       "require": "./dist/webhooks.cjs"
     },
-    "./public-charges": {
-      "types": "./dist/public-charges.d.ts",
-      "import": "./dist/public-charges.js",
-      "require": "./dist/public-charges.cjs"
-    },
-    "./organization": {
-      "types": "./dist/organization.d.ts",
-      "import": "./dist/organization.js",
-      "require": "./dist/organization.cjs"
-    },
-    "./users": {
-      "types": "./dist/users.d.ts",
-      "import": "./dist/users.js",
-      "require": "./dist/users.cjs"
-    },
-    "./api-keys": {
-      "types": "./dist/api-keys.d.ts",
-      "import": "./dist/api-keys.js",
-      "require": "./dist/api-keys.cjs"
-    },
-    "./invitations": {
-      "types": "./dist/invitations.d.ts",
-      "import": "./dist/invitations.js",
-      "require": "./dist/invitations.cjs"
-    },
     "./metrics": {
       "types": "./dist/metrics.d.ts",
       "import": "./dist/metrics.js",
       "require": "./dist/metrics.cjs"
-    },
-    "./auth": {
-      "types": "./dist/auth.d.ts",
-      "import": "./dist/auth.js",
-      "require": "./dist/auth.cjs"
     },
     "./sandbox": {
       "types": "./dist/sandbox.d.ts",
@@ -101,7 +71,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@klappay/types": "^1.1.2"
+    "@klappay/types": "^2.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",

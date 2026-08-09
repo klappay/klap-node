@@ -11,21 +11,18 @@ export type SSEEvent<T> = { event: string; data: T }
  * event on the stream (`event: <name>` + `data: <json>` pairs; a
  * comment-only heartbeat `: ping` line has neither, so it's silently
  * skipped) instead of filtering for one hardcoded event name and shape.
- * Used by streams whose event name (`publicCharges.streamEvents`) or
- * auth requirement (`auth: 'none'` for the public charge stream) differs
- * from `streamChargeEvents`' charges-specific assumptions.
+ * Used by streams whose event name differs from `streamChargeEvents`'
+ * charges-specific assumptions (e.g. `distributions.streamPending`).
  */
 export async function* streamSSEEvents<T>(
   config: HttpConfig,
   path: string,
   signal: AbortSignal,
-  options: { auth?: 'apiKey' | 'none' } = {},
 ): AsyncGenerator<SSEEvent<T>> {
-  const auth = options.auth ?? 'apiKey'
-  const headers: Record<string, string> = { Accept: 'text/event-stream' }
-  if (auth === 'apiKey') {
-    if (!config.apiKey) throw new MissingCredentialError('apiKey', path)
-    headers.Authorization = `Bearer ${config.apiKey}`
+  if (!config.apiKey) throw new MissingCredentialError(path)
+  const headers: Record<string, string> = {
+    Accept: 'text/event-stream',
+    Authorization: `Bearer ${config.apiKey}`,
   }
 
   const url = new URL(path, config.baseUrl)
@@ -69,7 +66,7 @@ export async function* streamChargeEvents(
   path: string,
   signal: AbortSignal,
 ): AsyncGenerator<Charge> {
-  if (!config.apiKey) throw new MissingCredentialError('apiKey', path)
+  if (!config.apiKey) throw new MissingCredentialError(path)
 
   const url = new URL(path, config.baseUrl)
   const res = await fetch(url, {

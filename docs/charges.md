@@ -14,7 +14,7 @@ const charge = await klap.charges.create({
     { token: 'USDC', network: 'optimism' },
     { token: 'USDT', network: 'base' },
   ],
-  expiresIn: 3600, // seconds, optional — account default otherwise
+  expiresIn: 3600, // seconds, required — 60 to 3600 (1 hour max)
   externalRef: 'order_123', // your own correlation id, optional
   source: 'checkout', // free-form label, optional
   metadata: { plan: 'pro' }, // optional
@@ -34,27 +34,18 @@ your environment right now? See [`networks.md`](./networks.md) —
 picker from it instead of hardcoding the pairs client-side, since it
 changes as new networks/tokens come online.
 
-`mode` defaults to `'standard'` — the usual lifecycle: accumulates
-transfers toward one resolution (`confirmed`/`expired`/`underpaid`/
-`canceled`), settles once. Pass `mode: 'continuous'` for a charge that never
-resolves — `status` stays `pending` for its entire life, and every
-credited transfer settles independently instead of accumulating toward
-one confirmation (a link in a creator's bio, a permanent donation/
-collection address). `continuous` requires both `amount` and
-`expiresIn` to be omitted — there's no goal to accumulate toward and no
-deadline. See [`webhooks.md`](./webhooks.md) for the
-`charge.contribution_received`/`charge.contribution_settled` events
-`continuous` charges emit per contribution instead of the usual
-`charge.confirmed`/`charge.settled`, and
-[`public-charges.md`](./public-charges.md) for how public, credential-less
-lookup differs for a `continuous` charge (no single `confirmedAt`).
+`amount` and `expiresIn` are both required — every charge has a target
+amount and a fixed deadline; there's no default to fall back on. `expiresIn`
+is capped at 3600 seconds (60 minutes), sized off the slowest chain Klap
+supports (a safely-confirmed Ethereum mainnet transfer can take up to
+~15 minutes), leaving real margin for payer-side delay on top of that.
 
 Every field is documented in `@klappay/types`' `CreateChargeSchema` — the
 SDK doesn't duplicate that documentation, it re-exports the same types.
 The parameter type is `CreateChargeRequest` (not `CreateChargeInput` —
-that's the post-parse shape, where defaulted fields like `mode`/
-`currency` are always present; `CreateChargeRequest` is what you
-actually build, where they're optional).
+that's the post-parse shape, where defaulted fields like `currency` are
+always present; `CreateChargeRequest` is what you actually build, where
+they're optional).
 
 **Idempotency**: if you don't pass `idempotencyKey`, the SDK generates
 one for you automatically. That makes every `create()` call safe to retry
@@ -69,48 +60,28 @@ yourself (e.g. deriving it from your own order id).
 const charge = await klap.charges.get('ch_abc123')
 ```
 
-## `cancel(id)`
-
-```ts
-const canceled = await klap.charges.cancel('ch_abc123')
-// canceled.status === 'canceled', canceled.canceledAt is set
-```
-
-The one terminal status a merchant reaches on purpose rather than
-automatically. Only valid from `pending`/`partially_paid`, and only for
-a `mode: 'standard'` charge (a `continuous` one has no single lifecycle
-to cancel) — anything else throws `KlapApiError` (`409
-charge_not_cancelable`). A transfer that still lands afterward doesn't
-revert this: `status` stays `canceled`, and a `charge.paid_after_cancel`
-webhook fires instead (see [`webhooks.md`](./webhooks.md)) — the cue to
-manually refund or honor it. Not simulable via `klap.sandbox` — see
-[`sandbox-testing.md`](./sandbox-testing.md#cancellation-is-not-sandbox-triggerable).
-Canceling a charge someone else is currently `waitForConfirmation()`-ing
-rejects that wait with `ChargeCanceledError` — see below.
-
 ## Observing a charge until it resolves
 
 This is the SDK's main reason to exist over calling the REST API
 directly — payments aren't request/response, they have state
-(`pending → partially_paid → confirmed`, or `expired`/`underpaid`/
-`canceled`), and watching that state used to mean hand-rolling a
-polling loop yourself.
+(`pending → partially_paid → confirmed`, or `expired`/`underpaid`),
+and watching that state used to mean hand-rolling a polling loop
+yourself. Every status is reached automatically, on its own timeline —
+there is no merchant-initiated cancellation.
 
 ```ts
 try {
   const confirmed = await charge.waitForConfirmation({ timeoutMs: 60 * 60_000 })
   console.log('Paid!', confirmed.amountReceived)
 } catch (err) {
-  // ChargeExpiredError | ChargeUnderpaidError | ChargeCanceledError | WaitTimeoutError
+  // ChargeExpiredError | ChargeUnderpaidError | WaitTimeoutError
   // see errors.md
 }
 ```
 
 `waitForConfirmation()` resolves **only** when `status` reaches
-`'confirmed'`. Every other terminal outcome — `expired`, `underpaid`,
-`canceled` (the merchant called `klap.charges.cancel()` while the wait
-was in progress), or the timeout elapsing first — **rejects** with a
-specific typed error
+`'confirmed'`. Every other terminal outcome — `expired`, `underpaid`, or
+the timeout elapsing first — **rejects** with a specific typed error
 instead of resolving with a charge you'd have to inspect yourself. This
 matches normal Promise semantics: `await` succeeding means the happy path
 happened; anything else you have to explicitly `catch`.
@@ -188,25 +159,19 @@ if the timeout elapses first.
 
 `waitForConfirmation`/`waitForSettlement` cover the two most common
 questions — did the payer pay, did the merchant get paid. `waitFor()` is
-the general form, for the other four events:
+the general form, for the other five events:
 
 ```ts
 const partiallyPaid = await charge.waitFor('charge.partially_paid')
 const expired = await charge.waitFor('charge.expired')
 const underpaid = await charge.waitFor('charge.underpaid')
 const failed = await charge.waitFor('charge.settlement_failed')
+const overpaid = await charge.waitFor('charge.overpaid')
 ```
 
-`event` is any `TriggerableChargeEvent` (`@klappay/types`) — every
-charge `WebhookEventType` except `charge.created`,
-`charge.paused`/`charge.reactivated` (background-worker-driven, not a
-payment state), `charge.contribution_received`/
-`charge.contribution_settled` (exclusive to `mode: 'continuous'`
-charges, not simulable via this trigger), and `charge.canceled`/
-`charge.paid_after_cancel` (cancellation is already a real, immediate
-action via `cancel()` itself — see
-[`sandbox-testing.md`](./sandbox-testing.md#cancellation-is-not-sandbox-triggerable)).
-Same underlying engine as
+`event` is any `TriggerableChargeEvent` (`@klappay/types`) — every charge
+`WebhookEventType` except `charge.created` (a charge already exists by
+the time you have an id to trigger against). Same underlying engine as
 `waitForConfirmation`/`waitForSettlement` (SSE-first, polling fallback,
 same `WaitOptions`), but simpler on purpose: it only resolves on the
 specific event you asked for, and never rejects with a typed error for a
@@ -278,11 +243,6 @@ than one pair — with exactly one, it's resolved automatically:
 ```ts
 const svg = await klap.charges.getQrCode('ch_abc123', { token: 'USDC', network: 'base' })
 ```
-
-No API key at all in the request? See
-[`klap.publicCharges.getQrCode()`](./public-charges.md#getqrcodechargeid-query)
-for the unauthenticated equivalent — same QR code, no credential
-needed.
 
 ## `watch(id, signal?)`
 

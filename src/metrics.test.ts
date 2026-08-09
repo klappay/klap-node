@@ -1,15 +1,13 @@
 import type { MetricsQueryRequest, MetricsQueryResult } from '@klappay/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { MissingCredentialError } from './errors'
 import { createMetricsClient } from './metrics'
 
-vi.mock('./http', async () => {
-  const actual = await vi.importActual<typeof import('./http')>('./http')
-  return { ...actual, request: vi.fn() }
-})
+vi.mock('./http', () => ({ request: vi.fn() }))
 
 const { request } = await import('./http')
 const requestMock = vi.mocked(request)
+
+const config = { baseUrl: 'https://api.example.com', apiKey: 'klap_test_key' }
 
 const QUERY: MetricsQueryRequest = {
   resource: 'charges',
@@ -29,7 +27,6 @@ const FAKE_RESULT: MetricsQueryResult = {
   meta: {
     resource: 'charges',
     environment: 'live',
-    scope: 'owner_admin',
     rowCount: 1,
     truncated: false,
   },
@@ -40,40 +37,16 @@ beforeEach(() => {
 })
 
 describe('createMetricsClient().query()', () => {
-  it('posts the query under the resolved organization with sessionToken auth', async () => {
+  it('posts the query to the metrics endpoint with apiKey auth', async () => {
     requestMock.mockResolvedValue(FAKE_RESULT)
-    const config = { baseUrl: 'https://api.example.com', sessionToken: 'sess_1' }
 
-    const result = await createMetricsClient(config).query('org_1', QUERY)
+    const result = await createMetricsClient(config).query(QUERY)
 
     expect(requestMock).toHaveBeenCalledWith(config, {
       method: 'POST',
-      path: '/v1/organizations/org_1/metrics/query',
+      path: '/v1/metrics/query',
       body: QUERY,
-      auth: 'sessionToken',
     })
     expect(result).toEqual(FAKE_RESULT)
-  })
-
-  it('falls back to the configured default organizationId', async () => {
-    requestMock.mockResolvedValue(FAKE_RESULT)
-    const config = {
-      baseUrl: 'https://api.example.com',
-      sessionToken: 'sess_1',
-      organizationId: 'org_default',
-    }
-
-    await createMetricsClient(config).query(undefined, QUERY)
-
-    expect(requestMock.mock.calls[0]?.[1].path).toBe('/v1/organizations/org_default/metrics/query')
-  })
-
-  it('throws when no organizationId is available', async () => {
-    const config = { baseUrl: 'https://api.example.com', sessionToken: 'sess_1' }
-
-    await expect(createMetricsClient(config).query(undefined, QUERY)).rejects.toThrow(
-      MissingCredentialError,
-    )
-    expect(requestMock).not.toHaveBeenCalled()
   })
 })

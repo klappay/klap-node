@@ -12,10 +12,11 @@ describe('createNetworksClient().get()', () => {
     requestMock.mockResolvedValue({ acceptedPayments: [] })
   })
 
-  it('requests GET /v1/networks', async () => {
+  it('requests GET /v1/networks and returns the resolved capability matrix', async () => {
     const config = { baseUrl: 'https://api.example.com', apiKey: 'klap_test_key' }
-    await createNetworksClient(config).get()
+    const result = await createNetworksClient(config).get()
 
     expect(requestMock.mock.calls[0]?.[1]).toMatchObject({ method: 'GET', path: '/v1/networks' })
+    expect(result).toEqual({ acceptedPayments: [] })
   })
 })

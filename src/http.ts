@@ -6,9 +6,6 @@ const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
 export type HttpConfig = {
   baseUrl: string
   apiKey?: string
-  sessionToken?: string
-  /** Default organization id, used by any organization-scoped method call that doesn't pass one explicitly. Mutable after construction via `klap.setOrganizationId()`. */
-  organizationId?: string
   debug?: boolean
   /** Aborts a request after this many ms. Default 30s — the `waitFor*()` methods use their own `AbortSignal` and are unaffected. */
   timeoutMs?: number
@@ -21,7 +18,6 @@ export type RequestOptions = {
   path: string
   body?: unknown
   query?: Record<string, QueryValue>
-  auth?: 'apiKey' | 'sessionToken' | 'none'
   /** Default `'json'`. Set to `'text'` for a non-JSON success response (e.g. raw SVG). Error responses are always JSON regardless. */
   responseType?: 'json' | 'text'
 }
@@ -36,34 +32,9 @@ function buildUrl(baseUrl: string, path: string, query?: Record<string, QueryVal
   return url.toString()
 }
 
-/**
- * Every organization-scoped method (organization/users/apiKeys/invitations,
- * except `invitations.accept()`) calls this to resolve which org id to put
- * in its request path — an explicit argument always wins, falling back to
- * `config.organizationId` (set at `createClient()` time or later via
- * `klap.setOrganizationId()`) when omitted.
- */
-export function resolveOrganizationId(
-  config: HttpConfig,
-  context: string,
-  explicit?: string,
-): string {
-  const organizationId = explicit ?? config.organizationId
-  if (!organizationId) throw new MissingCredentialError('organizationId', context)
-  return organizationId
-}
-
-function resolveAuthHeader(config: HttpConfig, options: RequestOptions): string | undefined {
-  const auth = options.auth ?? 'apiKey'
-  if (auth === 'none') return undefined
-
-  if (auth === 'apiKey') {
-    if (!config.apiKey) throw new MissingCredentialError('apiKey', options.path)
-    return `Bearer ${config.apiKey}`
-  }
-
-  if (!config.sessionToken) throw new MissingCredentialError('sessionToken', options.path)
-  return `Bearer ${config.sessionToken}`
+function resolveAuthHeader(config: HttpConfig, options: RequestOptions): string {
+  if (!config.apiKey) throw new MissingCredentialError(options.path)
+  return `Bearer ${config.apiKey}`
 }
 
 export async function request<T>(config: HttpConfig, options: RequestOptions): Promise<T> {
@@ -76,7 +47,7 @@ export async function request<T>(config: HttpConfig, options: RequestOptions): P
     method: options.method,
     headers: {
       'Content-Type': 'application/json',
-      ...(authHeader ? { Authorization: authHeader } : {}),
+      Authorization: authHeader,
     },
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
     signal: AbortSignal.timeout(config.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS),

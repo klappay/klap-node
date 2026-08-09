@@ -39,21 +39,9 @@ export function createChargesClient(config: HttpConfig) {
     },
 
     async get(id: string): Promise<KlapCharge> {
-      const charge = await request<Charge>(config, { method: 'GET', path: `/v1/charges/${id}` })
-      return wrapCharge(config, charge)
-    },
-
-    /**
-     * Cancels a `pending`/`partially_paid`, `mode: 'standard'` charge —
-     * the one terminal status reached by the merchant rather than
-     * automatically. Throws `KlapApiError` (`409 charge_not_cancelable`)
-     * for any other status or a `continuous` charge. A transfer that
-     * still lands afterward doesn't revert this — see `charge.paid_after_cancel`.
-     */
-    async cancel(id: string): Promise<KlapCharge> {
       const charge = await request<Charge>(config, {
-        method: 'POST',
-        path: `/v1/charges/${id}/cancel`,
+        method: 'GET',
+        path: `/v1/charges/${encodeURIComponent(id)}`,
       })
       return wrapCharge(config, charge)
     },
@@ -67,7 +55,7 @@ export function createChargesClient(config: HttpConfig) {
     async getQrCode(id: string, query?: GetChargeQrCodeQueryRequest): Promise<string> {
       return request<string>(config, {
         method: 'GET',
-        path: `/v1/charges/${id}/qrcode`,
+        path: `/v1/charges/${encodeURIComponent(id)}/qrcode`,
         query,
         responseType: 'text',
       })
@@ -88,7 +76,7 @@ export function createChargesClient(config: HttpConfig) {
     async getTimeline(id: string): Promise<TimelineEvent[]> {
       return request<TimelineEvent[]>(config, {
         method: 'GET',
-        path: `/v1/charges/${id}/timeline`,
+        path: `/v1/charges/${encodeURIComponent(id)}/timeline`,
       })
     },
 
@@ -101,7 +89,7 @@ export function createChargesClient(config: HttpConfig) {
      * `status`/`settlementStatus` changes; closes when the server does.
      */
     watch(id: string, signal: AbortSignal = new AbortController().signal): AsyncGenerator<Charge> {
-      return streamChargeEvents(config, `/v1/charges/${id}/events`, signal)
+      return streamChargeEvents(config, `/v1/charges/${encodeURIComponent(id)}/events`, signal)
     },
   }
 }

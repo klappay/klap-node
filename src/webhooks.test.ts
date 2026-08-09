@@ -72,48 +72,18 @@ describe('constructWebhookEvent', () => {
     }
   })
 
-  it('parses a non-charge event payload the same way', () => {
+  it('narrows webhook.endpoint_unhealthy to its own smaller data shape', () => {
     const payload = {
       id: 'evt_2',
-      event: 'payout_address.changed',
+      event: 'webhook.endpoint_unhealthy',
       createdAt: '2026-01-01T00:00:00.000Z',
-      data: { organizationId: 'org_1', from: null, to: '0xabc' },
+      data: { webhookId: 'wh_1', url: 'https://example.com/hook', failureRatio: 0.35 },
     }
     const body = JSON.stringify(payload)
     const parsed = constructWebhookEvent(body, sign(body), SECRET)
-    expect(parsed.event).toBe('payout_address.changed')
-    if (parsed.event === 'payout_address.changed') {
-      expect(parsed.data.to).toBe('0xabc')
-    }
-  })
-
-  it('narrows charge.canceled to the full Charge data shape', () => {
-    const payload = {
-      id: 'evt_3',
-      event: 'charge.canceled',
-      createdAt: '2026-01-01T00:00:00.000Z',
-      data: { id: 'ch_1', status: 'canceled', canceledAt: '2026-01-01T00:00:00.000Z' },
-    }
-    const body = JSON.stringify(payload)
-    const parsed = constructWebhookEvent(body, sign(body), SECRET)
-    expect(parsed.event).toBe('charge.canceled')
-    if (parsed.event === 'charge.canceled') {
-      expect(parsed.data.status).toBe('canceled')
-    }
-  })
-
-  it('narrows auth.email_changed to its own smaller data shape', () => {
-    const payload = {
-      id: 'evt_4',
-      event: 'auth.email_changed',
-      createdAt: '2026-01-01T00:00:00.000Z',
-      data: { userId: 'usr_1', previousEmail: 'old@example.com', newEmail: 'new@example.com' },
-    }
-    const body = JSON.stringify(payload)
-    const parsed = constructWebhookEvent(body, sign(body), SECRET)
-    expect(parsed.event).toBe('auth.email_changed')
-    if (parsed.event === 'auth.email_changed') {
-      expect(parsed.data.newEmail).toBe('new@example.com')
+    expect(parsed.event).toBe('webhook.endpoint_unhealthy')
+    if (parsed.event === 'webhook.endpoint_unhealthy') {
+      expect(parsed.data.failureRatio).toBe(0.35)
     }
   })
 
@@ -154,23 +124,15 @@ describe('createWebhooksClient().categories', () => {
     expect(categories.payments).toContain('charge.confirmed')
   })
 
-  it('lists auth.suspicious_activity under security', () => {
-    expect(categories.security).toContain('auth.suspicious_activity')
+  it('lists every charge event under payments', () => {
+    expect(categories.payments).toContain('charge.created')
+    expect(categories.payments).toContain('charge.overpaid')
   })
 
-  it('lists the self-service account-change events under security', () => {
-    expect(categories.security).toContain('auth.password_changed')
-    expect(categories.security).toContain('auth.email_change_requested')
-    expect(categories.security).toContain('auth.email_changed')
-  })
-
-  it('lists charge.canceled and charge.paid_after_cancel under payments', () => {
-    expect(categories.payments).toContain('charge.canceled')
-    expect(categories.payments).toContain('charge.paid_after_cancel')
-  })
-
-  it('lists webhook.delivery_failed under webhooks', () => {
+  it('lists every delivery-health event under webhooks', () => {
     expect(categories.webhooks).toContain('webhook.delivery_failed')
+    expect(categories.webhooks).toContain('webhook.delivery_recovered')
+    expect(categories.webhooks).toContain('webhook.endpoint_unhealthy')
   })
 })
 

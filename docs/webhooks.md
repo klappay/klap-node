@@ -25,14 +25,13 @@ old secret stops verifying immediately, and the webhook keeps its id and
 delivery history.
 
 `charge.confirmed` vs `charge.settled` is a real distinction, not two
-names for the same thing: `confirmed` means Klap detected the payment on
--chain; `settled` means the merchant's wallet actually received it — a
-separate, later step. Subscribe to `confirmed` if you only need "will I
-get paid," or `settled` if you need "has the money actually arrived."
-A `mode: 'continuous'` charge (see [`charges.md`](./charges.md)) never
-reaches `confirmed`/`settled` — it emits `charge.contribution_received`/
-`charge.contribution_settled` per contribution instead. See the full
-event list in `@klappay/types`' `WebhookEventTypeSchema`.
+names for the same thing: `confirmed` means Klap detected the payment
+on-chain; `settled` means the merchant's wallet actually received it —
+a separate, later step. Subscribe to `confirmed` if you only need "will
+I get paid," or `settled` if you need "has the money actually arrived."
+See the full event list in `@klappay/types`' `ChargeWebhookEventTypeSchema`
+(8 charge events) and `WebhookDeliveryEventTypeSchema` (3 delivery-health
+events) — 11 events total.
 
 ### Environment scoping
 
@@ -40,35 +39,30 @@ event list in `@klappay/types`' `WebhookEventTypeSchema`.
 from whichever API key created it — there's no `create()` input field
 for it, and it can't be changed afterward. `null` means the webhook was
 created before this field existed, and it keeps receiving every
-environment, same as always. Most events (every `charge.*`, the
-webhook-management/delivery-health events, `api_key.created`/
-`api_key.revoked`) are only delivered to a webhook whose `environment`
-matches the event's own; the remaining account/security events
-(`member.*`, `auth.*`, `fee_tier.updated`, `payout_address.changed`)
-have no environment concept and reach every subscribed webhook
-regardless. In practice: register a webhook with each of your `live`
-and `test` API keys if you want separate endpoints/handlers per
-environment — a `test`-key webhook never receives a real `live` charge
-event, and a `live`-key webhook never receives a sandbox-triggered one.
+environment, same as always. A webhook only receives events whose own
+environment matches — a `test`-key webhook never receives a real `live`
+charge event, and a `live`-key webhook never receives a sandbox-triggered
+one. Register a webhook with each of your `live` and `test` API keys if
+you want separate endpoints/handlers per environment.
 
 ### Subscribing by category or wildcard, not just individual events
 
-Events are grouped into four categories — `payments`, `account`,
-`webhooks` (delivery health), `security`:
+Events are grouped into two categories — `payments` (every `charge.*`
+event) and `webhooks` (the three delivery-health events):
 
 ```ts
 // receive every event in these categories — new events added to a
 // category later arrive automatically, no need to update the subscription
 await klap.webhooks.create({
   url: 'https://your-server.com/webhooks/klap',
-  eventCategories: ['payments', 'security'],
+  eventCategories: ['payments', 'webhooks'],
 })
 
 // everything except specific exclusions
 await klap.webhooks.create({
   url: 'https://your-server.com/webhooks/klap',
   events: ['*'],
-  excludeEvents: ['auth.login'],
+  excludeEvents: ['charge.overpaid'],
 })
 ```
 
@@ -76,9 +70,8 @@ await klap.webhooks.create({
 discoverability:
 
 ```ts
-klap.webhooks.categories.security
-// ['auth.login', 'auth.login_failed', 'auth.suspicious_activity', 'auth.email_verified', ...]
-// — see @klappay/types' SecurityWebhookEventTypeSchema for the full, current list
+klap.webhooks.categories.payments
+// ['charge.created', 'charge.partially_paid', 'charge.confirmed', ...]
 ```
 
 These are additive — `events` alone (the first example above) keeps
@@ -98,7 +91,7 @@ app.post('/webhooks/klap', (req, res) => {
   try {
     const event = klap.webhooks.constructEvent(
       req.rawBody, // the raw, unparsed request body string — not req.body
-      req.headers['x-klap-signature'],
+      req.headers['x-klappay-signature'],
       process.env.KLAP_WEBHOOK_SECRET,
     )
 
@@ -106,9 +99,9 @@ app.post('/webhooks/klap', (req, res) => {
       case 'charge.settled':
         // event.data is a fully-typed Charge
         break
-      case 'payout_address.changed':
-        // event.data is { organizationId, from, to } — a different, smaller
-        // shape, and TypeScript already knows it here without a cast
+      case 'webhook.endpoint_unhealthy':
+        // event.data is { webhookId, url, failureRatio } — a different,
+        // smaller shape, and TypeScript already knows it here without a cast
         break
       // ...
     }
@@ -133,15 +126,13 @@ timing attacks are a real risk), checks that the delivery is recent
 (`options.toleranceSeconds`, default 300 — 5 minutes), and parses the
 body into `TypedWebhookPayload` — a discriminated union keyed by
 `event`, so `data` narrows automatically in a `switch`/`if` on `event`
-(same pattern as Stripe's `Event.data.object`). Most `charge.*` events
-carry the full `Charge` object — the exceptions are `charge.paused`/
-`charge.reactivated`/`charge.contribution_received`/
-`charge.contribution_settled`/`charge.paid_after_cancel`, which (like
-every non-charge event) carry their own smaller, event-specific object
-instead — see `WebhookEventDataMap` in `@klappay/types` for the exact
-shape per event. Throws
-`InvalidWebhookSignatureError` if the HMAC doesn't match, or
-`WebhookTimestampToleranceError` if the signature is valid but the
+(same pattern as Stripe's `Event.data.object`). Every `charge.*` event
+carries the full `Charge` object as `data`; every `webhook.*`
+delivery-health event carries `{ webhookId, url, failureRatio? }`
+instead (`failureRatio` only present on `webhook.endpoint_unhealthy`) —
+see `WebhookEventDataMap` in `@klappay/types` for the exact shape per
+event. Throws `InvalidWebhookSignatureError` if the HMAC doesn't match,
+or `WebhookTimestampToleranceError` if the signature is valid but the
 timestamp is outside the tolerance window (a strong signal of a replayed
 delivery — see "Signing and replay protection" below). The envelope
 (`id`/`event`/`createdAt`) is validated at runtime; `data` itself is

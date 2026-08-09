@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  ChargeCanceledError,
   ChargeExpiredError,
   ChargeUnderpaidError,
   InvalidWebhookSignatureError,
@@ -46,15 +45,6 @@ describe('ChargeUnderpaidError', () => {
   })
 })
 
-describe('ChargeCanceledError', () => {
-  it('names the charge in its message', () => {
-    const err = new ChargeCanceledError('ch_2b')
-    expect(err.name).toBe('ChargeCanceledError')
-    expect(err.chargeId).toBe('ch_2b')
-    expect(err.message).toBe('Charge ch_2b was canceled before it was paid.')
-  })
-})
-
 describe('SettlementFailedError', () => {
   it('names the charge in its message', () => {
     const err = new SettlementFailedError('ch_3')
@@ -95,24 +85,10 @@ describe('WebhookTimestampToleranceError', () => {
 
 describe('MissingCredentialError', () => {
   it('explains how to fix a missing apiKey', () => {
-    const err = new MissingCredentialError('apiKey', 'charges.create()')
+    const err = new MissingCredentialError('charges.create()')
     expect(err.name).toBe('MissingCredentialError')
     expect(err.message).toBe(
-      'charges.create() requires a apiKey — pass it to createClient(), or call klap.setApiKey() first.',
-    )
-  })
-
-  it('explains how to fix a missing sessionToken', () => {
-    const err = new MissingCredentialError('sessionToken', 'organization.get()')
-    expect(err.message).toBe(
-      'organization.get() requires a sessionToken — pass it to createClient(), or call klap.auth.login() first.',
-    )
-  })
-
-  it('explains how to fix a missing organizationId', () => {
-    const err = new MissingCredentialError('organizationId', 'users.list()')
-    expect(err.message).toBe(
-      'users.list() requires a organizationId — pass it to this call, set a default via createClient({ organizationId }), or call klap.setOrganizationId().',
+      'charges.create() requires an apiKey — pass it to createClient(), or call klap.setApiKey() first.',
     )
   })
 })

@@ -1,4 +1,4 @@
-import type { Charge, NonChargeTriggerableEvent, TriggerableChargeEvent } from '@klappay/types'
+import type { Charge, TriggerableChargeEvent } from '@klappay/types'
 import { type HttpConfig, request } from './http'
 
 export function createSandboxClient(config: HttpConfig) {
@@ -9,15 +9,8 @@ export function createSandboxClient(config: HttpConfig) {
   ): Promise<Charge> =>
     request<Charge>(config, {
       method: 'POST',
-      path: `/v1/sandbox/charges/${chargeId}/trigger`,
+      path: `/v1/sandbox/charges/${encodeURIComponent(chargeId)}/trigger`,
       body: { event, amount },
-    })
-
-  const triggerEvent = (event: NonChargeTriggerableEvent): Promise<void> =>
-    request<void>(config, {
-      method: 'POST',
-      path: '/v1/sandbox/events/trigger',
-      body: { event },
     })
 
   return {
@@ -30,6 +23,5 @@ export function createSandboxClient(config: HttpConfig) {
     underpay: (chargeId: string) => trigger(chargeId, 'charge.underpaid'),
     settle: (chargeId: string) => trigger(chargeId, 'charge.settled'),
     failSettlement: (chargeId: string) => trigger(chargeId, 'charge.settlement_failed'),
-    triggerEvent,
   }
 }

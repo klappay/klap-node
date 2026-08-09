@@ -32,16 +32,6 @@ export class ChargeUnderpaidError extends Error {
   }
 }
 
-export class ChargeCanceledError extends Error {
-  readonly chargeId: string
-
-  constructor(chargeId: string) {
-    super(`Charge ${chargeId} was canceled before it was paid.`)
-    this.name = 'ChargeCanceledError'
-    this.chargeId = chargeId
-  }
-}
-
 export class SettlementFailedError extends Error {
   readonly chargeId: string
 
@@ -86,14 +76,10 @@ export class WebhookTimestampToleranceError extends Error {
 }
 
 export class MissingCredentialError extends Error {
-  constructor(credential: 'apiKey' | 'sessionToken' | 'organizationId', context: string) {
-    const howToFix =
-      credential === 'organizationId'
-        ? 'pass it to this call, set a default via createClient({ organizationId }), or call klap.setOrganizationId()'
-        : credential === 'sessionToken'
-          ? 'pass it to createClient(), or call klap.auth.login() first'
-          : 'pass it to createClient(), or call klap.setApiKey() first'
-    super(`${context} requires a ${credential} — ${howToFix}.`)
+  constructor(context: string) {
+    super(
+      `${context} requires an apiKey — pass it to createClient(), or call klap.setApiKey() first.`,
+    )
     this.name = 'MissingCredentialError'
   }
 }

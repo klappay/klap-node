@@ -14,7 +14,6 @@ const config = { baseUrl: 'https://api.example.com', apiKey: 'klap_test_key' }
 
 const FAKE_CHARGE: Charge = {
   id: 'ch_fake',
-  mode: 'standard',
   amount: 10,
   amountReceived: null,
   isOverpaid: false,
@@ -35,8 +34,6 @@ const FAKE_CHARGE: Charge = {
   confirmedAt: null,
   settledAt: null,
   lastActivityAt: '2026-01-01T00:00:00.000Z',
-  pausedAt: null,
-  canceledAt: null,
 }
 
 describe('createChargesClient().create()', () => {
@@ -49,6 +46,7 @@ describe('createChargesClient().create()', () => {
     await createChargesClient(config).create({
       amount: 10,
       acceptedPayments: [{ token: 'USDC', network: 'base' }],
+      expiresIn: 3600,
     })
 
     const body = requestMock.mock.calls[0]?.[1].body as { idempotencyKey: string }
@@ -60,11 +58,13 @@ describe('createChargesClient().create()', () => {
       amount: 10,
       acceptedPayments: [{ token: 'USDC', network: 'base' }],
       currency: 'USD',
+      expiresIn: 3600,
     })
     await createChargesClient(config).create({
       amount: 10,
       acceptedPayments: [{ token: 'USDC', network: 'base' }],
       currency: 'USD',
+      expiresIn: 3600,
     })
 
     const firstKey = (requestMock.mock.calls[0]?.[1].body as { idempotencyKey: string })
@@ -79,6 +79,7 @@ describe('createChargesClient().create()', () => {
       amount: 10,
       acceptedPayments: [{ token: 'USDC', network: 'base' }],
       currency: 'USD',
+      expiresIn: 3600,
       idempotencyKey: 'my-own-key',
     })
 
@@ -167,28 +168,6 @@ describe('createChargesClient().getTimeline()', () => {
       path: '/v1/charges/ch_1/timeline',
     })
     expect(result).toEqual(events)
-  })
-})
-
-describe('createChargesClient().cancel()', () => {
-  beforeEach(() => {
-    requestMock.mockReset()
-    requestMock.mockResolvedValue({
-      ...FAKE_CHARGE,
-      status: 'canceled',
-      canceledAt: '2026-01-01T02:00:00.000Z',
-    })
-  })
-
-  it('posts to the cancel endpoint and returns a wrapped KlapCharge', async () => {
-    const result = await createChargesClient(config).cancel('ch_fake')
-
-    expect(requestMock).toHaveBeenCalledWith(config, {
-      method: 'POST',
-      path: '/v1/charges/ch_fake/cancel',
-    })
-    expect(result.status).toBe('canceled')
-    expect(result.waitForConfirmation).toBeTypeOf('function')
   })
 })
 

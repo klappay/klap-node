@@ -13,7 +13,11 @@ auth failures, not-found, etc.).
 import { KlapApiError } from '@klappay/node'
 
 try {
-  await klap.charges.create({ amount: -5, acceptedPayments: [{ token: 'USDC', network: 'base' }] })
+  await klap.charges.create({
+    amount: -5,
+    acceptedPayments: [{ token: 'USDC', network: 'base' }],
+    expiresIn: 3600,
+  })
 } catch (err) {
   if (err instanceof KlapApiError) {
     console.log(err.status) // HTTP status, e.g. 400
@@ -38,7 +42,6 @@ see [`charges.md`](./charges.md) for the full behavior.
 |---|---|
 | `ChargeExpiredError` | `waitForConfirmation()` — the charge's `status` reached `expired` (nobody paid before `expiresAt`) |
 | `ChargeUnderpaidError` | `waitForConfirmation()` — the charge's `status` reached `underpaid` (partial payment, then `expiresAt` passed) |
-| `ChargeCanceledError` | `waitForConfirmation()` — the merchant called `klap.charges.cancel()` while the wait was in progress |
 | `SettlementFailedError` | `waitForSettlement()` — `settlementStatus` reached `failed` (retries exhausted; rare, contact support) |
 | `WaitTimeoutError` | Either method — the `timeoutMs` elapsed before a terminal state was reached |
 
@@ -49,7 +52,6 @@ Each carries a `chargeId` property. `WaitTimeoutError` also carries the
 import {
   ChargeExpiredError,
   ChargeUnderpaidError,
-  ChargeCanceledError,
   WaitTimeoutError,
 } from '@klappay/node'
 
@@ -58,7 +60,6 @@ try {
 } catch (err) {
   if (err instanceof ChargeExpiredError) { /* nobody paid */ }
   else if (err instanceof ChargeUnderpaidError) { /* partial payment only */ }
-  else if (err instanceof ChargeCanceledError) { /* merchant canceled it mid-wait */ }
   else if (err instanceof WaitTimeoutError) { /* still pending, keep checking later */ }
   else throw err
 }
@@ -80,8 +81,6 @@ replay protection".
 
 ## `MissingCredentialError`
 
-Thrown immediately, client-side, when you call a method that needs a
-credential — `apiKey`, `sessionToken`, or `organizationId` — you didn't
-provide to `createClient()` (or, for `organizationId`, didn't pass
-explicitly to that specific call either). See
-[`authentication.md`](./authentication.md).
+Thrown immediately, client-side, when you call a method that needs an
+`apiKey` you didn't provide to `createClient()` — pass it there, or call
+`klap.setApiKey()` first.

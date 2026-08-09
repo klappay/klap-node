@@ -1,26 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { KlapApiError, MissingCredentialError } from './errors'
-import { request, resolveOrganizationId } from './http'
+import { request } from './http'
 
 const baseConfig = { baseUrl: 'https://api.example.com' }
-
-describe('resolveOrganizationId', () => {
-  it('prefers an explicit id over the configured default', () => {
-    const config = { ...baseConfig, organizationId: 'org_default' }
-    expect(resolveOrganizationId(config, 'test', 'org_explicit')).toBe('org_explicit')
-  })
-
-  it('falls back to the configured default when no explicit id is passed', () => {
-    const config = { ...baseConfig, organizationId: 'org_default' }
-    expect(resolveOrganizationId(config, 'test', undefined)).toBe('org_default')
-  })
-
-  it('throws MissingCredentialError when neither is set', () => {
-    expect(() => resolveOrganizationId(baseConfig, 'test.method()', undefined)).toThrow(
-      MissingCredentialError,
-    )
-  })
-})
 
 describe('request()', () => {
   const fetchMock = vi.fn()
@@ -71,31 +53,6 @@ describe('request()', () => {
       MissingCredentialError,
     )
     expect(fetchMock).not.toHaveBeenCalled()
-  })
-
-  it('uses sessionToken auth when requested', async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }))
-    await request(
-      { ...baseConfig, sessionToken: 'sess_abc' },
-      { method: 'GET', path: '/v1/x', auth: 'sessionToken' },
-    )
-
-    const init = fetchMock.mock.calls[0]?.[1] as RequestInit & { headers: Record<string, string> }
-    expect(init.headers.Authorization).toBe('Bearer sess_abc')
-  })
-
-  it('throws MissingCredentialError when sessionToken auth is required but absent', async () => {
-    await expect(
-      request(baseConfig, { method: 'GET', path: '/v1/x', auth: 'sessionToken' }),
-    ).rejects.toThrow(MissingCredentialError)
-  })
-
-  it('sends no Authorization header when auth is "none"', async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }))
-    await request(baseConfig, { method: 'POST', path: '/v1/auth/login', auth: 'none' })
-
-    const init = fetchMock.mock.calls[0]?.[1] as RequestInit & { headers: Record<string, string> }
-    expect(init.headers.Authorization).toBeUndefined()
   })
 
   it('JSON-stringifies the body when one is given, and omits it entirely when not', async () => {
