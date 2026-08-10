@@ -60,6 +60,9 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
@@ -84,6 +87,7 @@
     "lint-staged": "^15.2.0",
     "tsup": "^8.3.0",
     "typescript": "^5.6.0",
+    "vitepress": "^1.6.4",
     "vitest": "^3.2.6"
   },
   "pnpm": {

@@ -94,11 +94,24 @@ documentation for integrators, not this file. A change to a public
 method's signature, a new resource, or a behavior change to something
 already documented → update the matching `docs/*.md` file in the same
 change, not a follow-up. A new `docs/*.md` file → link it from
-`README.md`'s table and from `docs/getting-started.md`'s "Where to go
-next" list — a file sitting in `docs/` unlinked from both is orphaned.
-If in doubt whether a change is doc-worthy: if it would surprise someone
-reading `docs/` after not touching this code for a month, it's worth a
-line.
+`README.md`'s table, from `docs/getting-started.md`'s "Where to go
+next" list, **and** from `docs/.vitepress/config.mts`'s sidebar (and
+`docs/index.md`'s feature grid if it's a top-level resource) — a file
+sitting in `docs/` unlinked from the site's own nav is exactly as
+orphaned as one unlinked from `README.md`. If in doubt whether a
+change is doc-worthy: if it would surprise someone reading `docs/`
+after not touching this code for a month, it's worth a line.
+
+`docs/` is rendered as a VitePress site straight out of this same
+folder — `docs/.vitepress/` lives inside it, not as a parallel copy —
+so editing a `docs/*.md` file changes what the site shows with no sync
+step to remember. `pnpm docs:dev` runs it locally, `pnpm docs:build`
+does a static build (fails loudly on a dead internal link, which
+GitHub's Markdown rendering silently doesn't — worth running after
+touching cross-doc links), `pnpm docs:preview` serves that build.
+`.github/workflows/docs.yml` builds and deploys `docs/.vitepress/dist`
+to GitHub Pages on every push to `main` that touches `docs/**` — no
+separate deploy step to run by hand.
 
 ## Releases (Changesets)
 
