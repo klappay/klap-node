@@ -3,7 +3,6 @@ import llmstxt from 'vitepress-plugin-llms'
 
 export default defineConfig({
   title: 'klap-node',
-  base: '/klap-node/',
   description:
     'Official Node.js SDK for the Klap Core API — charges, webhooks, metrics, sandbox testing',
   cleanUrls: true,
@@ -12,7 +11,7 @@ export default defineConfig({
   head: [['link', { rel: 'icon', type: 'image/png', href: '/favicon.png' }]],
 
   vite: {
-    plugins: [llmstxt({ domain: 'https://klappay.github.io/klap-node' })],
+    plugins: [llmstxt({ domain: 'https://node-sdk.klappay.com' })],
   },
 
   themeConfig: {
