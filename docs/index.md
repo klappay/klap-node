@@ -2,12 +2,12 @@
 layout: home
 
 hero:
-  name: klap-node
+  name: '@klappay/node'
   text: Node.js SDK for the Klap Core API
   tagline: A thin, typed wrapper over @klappay/types' schemas and fetch — charges, webhooks, metrics, and sandbox testing.
   image:
     src: /logo.png
-    alt: klap-node
+    alt: '@klappay/node'
   actions:
     - theme: brand
       text: Getting started

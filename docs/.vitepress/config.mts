@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 import llmstxt from 'vitepress-plugin-llms'
 
 export default defineConfig({
-  title: 'klap-node',
+  title: '@klappay/node',
   description:
     'Official Node.js SDK for the Klap Core API — charges, webhooks, metrics, sandbox testing',
   cleanUrls: true,
@@ -20,7 +20,7 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Getting started', link: '/getting-started' },
-      { text: 'GitHub', link: 'https://github.com/klappay/klap-node' },
+      { text: 'npm', link: 'https://www.npmjs.com/package/@klappay/node' },
     ],
 
     sidebar: [
