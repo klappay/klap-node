@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import llmstxt from 'vitepress-plugin-llms'
 
 export default defineConfig({
   title: 'klap-node',
@@ -9,6 +10,10 @@ export default defineConfig({
   lastUpdated: true,
   appearance: 'force-dark',
   head: [['link', { rel: 'icon', type: 'image/png', href: '/favicon.png' }]],
+
+  vite: {
+    plugins: [llmstxt({ domain: 'https://klappay.github.io/klap-node' })],
+  },
 
   themeConfig: {
     logo: '/logo.png',
