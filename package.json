@@ -1,6 +1,6 @@
 {
   "name": "@klappay/node",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "license": "MIT",
   "description": "Official Node.js SDK for the Klap Core API. Import into your own backend project — this package is a library only, not runnable standalone and not for browser use (it handles secret API keys).",
   "keywords": ["klap", "klappay", "sdk", "crypto", "payments", "web3"],
