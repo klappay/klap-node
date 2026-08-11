@@ -75,3 +75,14 @@ including what those methods actually do and how they resolve/reject.
   integration end-to-end without any real on-chain activity.
 - [`tree-shaking.md`](./tree-shaking.md) — importing only what you use,
   for bundle-size-sensitive environments (e.g. serverless cold starts).
+
+## For LLMs and agents
+
+This site (built from these same files with VitePress) publishes
+[`llms.txt`](https://node-sdk.klappay.com/llms.txt) — a link index of
+every doc page — and [`llms-full.txt`](https://node-sdk.klappay.com/llms-full.txt)
+— the full content of every doc page concatenated into one plain-text
+file. Point an agent, RAG pipeline, or MCP server at either as a
+lightweight way to give it the whole SDK's documentation without
+scraping HTML. Both regenerate on every deploy, so they never drift
+from what's on this page.

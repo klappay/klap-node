@@ -43,7 +43,11 @@ try {
 
 ## Documentation
 
-Full docs live at [`docs/`](https://github.com/klappay/klap-node/tree/main/docs) on GitHub.
+Full docs live at [`docs/`](https://github.com/klappay/klap-node/tree/main/docs) on GitHub,
+and as a browsable site at [node-sdk.klappay.com](https://node-sdk.klappay.com). The site
+also publishes [`llms.txt`](https://node-sdk.klappay.com/llms.txt) and
+[`llms-full.txt`](https://node-sdk.klappay.com/llms-full.txt) — plain-text, LLM-friendly
+versions of these docs, regenerated on every deploy, for feeding an agent or MCP server.
 
 | Doc | Covers |
 |---|---|
