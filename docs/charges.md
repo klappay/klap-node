@@ -18,8 +18,16 @@ const charge = await klap.charges.create({
   externalRef: 'order_123', // your own correlation id, optional
   source: 'checkout', // free-form label, optional
   metadata: { plan: 'pro' }, // optional
+  redirectUrl: 'https://yourapp.com/thank-you', // optional, see below
 })
 ```
+
+`redirectUrl` only matters if you use Klappay's hosted checkout page
+(`charge.checkoutUrl` on the returned charge) — it's where the payer
+gets sent once that page's charge resolves; ignored otherwise. Must be
+`http(s)`. `charge.checkoutUrl` itself is never something you set —
+it's `null` unless hosted checkout is configured for your account, and
+present on every read (`create()`, `get()`, `list()`) once it is.
 
 `acceptedPayments` lets the payer choose which rail to actually use — at
 least one `(token, network)` pair, up to 14. Every transfer on an

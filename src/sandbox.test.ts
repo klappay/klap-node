@@ -26,6 +26,8 @@ const FAKE_CHARGE: Charge = {
   externalRef: null,
   source: null,
   metadata: null,
+  redirectUrl: null,
+  checkoutUrl: null,
   createdAt: '2026-01-01T00:00:00.000Z',
   expiresAt: '2026-01-01T01:00:00.000Z',
   confirmedAt: null,
