@@ -145,6 +145,22 @@ describe('createChargesClient().listAll()', () => {
     expect(requestMock.mock.calls[1]?.[1].query).toMatchObject({ cursor: 'cur_2' })
   })
 
+  it('stops after one page when hasMore is false, even if nextCursor is non-null', async () => {
+    requestMock.mockResolvedValueOnce({
+      data: [{ ...FAKE_CHARGE, id: 'ch_1' }],
+      nextCursor: 'cur_2',
+      hasMore: false,
+    })
+
+    const ids: string[] = []
+    for await (const charge of createChargesClient(config).listAll()) {
+      ids.push(charge.id)
+    }
+
+    expect(ids).toEqual(['ch_1'])
+    expect(requestMock).toHaveBeenCalledTimes(1)
+  })
+
   it('merges an explicit filter into every page request', async () => {
     requestMock.mockResolvedValue({ data: [], nextCursor: null, hasMore: false })
 

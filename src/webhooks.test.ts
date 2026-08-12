@@ -53,6 +53,14 @@ describe('verifyWebhookSignature', () => {
     const oldTimestamp = Math.floor(Date.now() / 1000) - 10_000
     expect(verifyWebhookSignature(body, sign(body, SECRET, oldTimestamp), SECRET)).toBe(true)
   })
+
+  it('rejects a truncated v1 of valid hex but the wrong length, without throwing', () => {
+    const body = JSON.stringify({ hello: 'world' })
+    const header = sign(body)
+    const truncatedHeader = header.slice(0, header.length - 4)
+    expect(() => verifyWebhookSignature(body, truncatedHeader, SECRET)).not.toThrow()
+    expect(verifyWebhookSignature(body, truncatedHeader, SECRET)).toBe(false)
+  })
 })
 
 describe('constructWebhookEvent', () => {
