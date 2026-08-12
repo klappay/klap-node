@@ -17,11 +17,23 @@ const charge = await klap.charges.create({
   expiresIn: 3600, // seconds, required — 60 to 3600 (1 hour max)
   externalRef: 'order_123', // your own correlation id, optional
   source: 'checkout', // free-form label, optional
-  metadata: { plan: 'pro' }, // optional
+  metadata: {
+    plan: 'pro', // yours — any shape, never validated
+    klappay: { products: [{ name: 'Pro plan', quantity: 1 }] }, // reserved, see below
+  },
   redirectUrl: 'https://yourapp.com/thank-you', // optional, see below
   splitRecipients: [{ address: '0x...', percent: 10, label: 'sales rep' }], // optional, see below
 })
 ```
+
+`metadata` is yours to fill with anything — never validated, returned
+as-is on every read. **One key is reserved: `metadata.klappay`.** If
+present, it must match `KlappayCheckoutMetadataSchema` (imported from
+`@klappay/types`, same as every other type here) or the whole request
+is rejected — today that's just `products` (up to 20 items, each a
+`name` plus optional `quantity`/`imageUrl`), shown on Klappay's hosted
+checkout page. Every other key in `metadata` is unaffected and stays
+exactly as free-form as before.
 
 `redirectUrl` only matters if you use Klappay's hosted checkout page
 (`charge.checkoutUrl` on the returned charge) — it's where the payer

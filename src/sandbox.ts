@@ -15,13 +15,15 @@ export function createSandboxClient(config: HttpConfig) {
 
   return {
     trigger,
-    confirm: (chargeId: string) => trigger(chargeId, 'charge.confirmed'),
-    partiallyPay: (chargeId: string, amount?: number) =>
+    confirm: (chargeId: string): Promise<Charge> => trigger(chargeId, 'charge.confirmed'),
+    partiallyPay: (chargeId: string, amount?: number): Promise<Charge> =>
       trigger(chargeId, 'charge.partially_paid', amount),
-    overpay: (chargeId: string, amount?: number) => trigger(chargeId, 'charge.overpaid', amount),
-    expire: (chargeId: string) => trigger(chargeId, 'charge.expired'),
-    underpay: (chargeId: string) => trigger(chargeId, 'charge.underpaid'),
-    settle: (chargeId: string) => trigger(chargeId, 'charge.settled'),
-    failSettlement: (chargeId: string) => trigger(chargeId, 'charge.settlement_failed'),
+    overpay: (chargeId: string, amount?: number): Promise<Charge> =>
+      trigger(chargeId, 'charge.overpaid', amount),
+    expire: (chargeId: string): Promise<Charge> => trigger(chargeId, 'charge.expired'),
+    underpay: (chargeId: string): Promise<Charge> => trigger(chargeId, 'charge.underpaid'),
+    settle: (chargeId: string): Promise<Charge> => trigger(chargeId, 'charge.settled'),
+    failSettlement: (chargeId: string): Promise<Charge> =>
+      trigger(chargeId, 'charge.settlement_failed'),
   }
 }
