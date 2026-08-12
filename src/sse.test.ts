@@ -3,10 +3,14 @@ import { MissingCredentialError } from './errors'
 import { streamChargeEvents, streamSSEEvents } from './sse'
 
 function fakeSseResponse(body: string): Response {
+  return fakeSseResponseChunks([body])
+}
+
+function fakeSseResponseChunks(chunks: string[]): Response {
   const encoder = new TextEncoder()
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
-      controller.enqueue(encoder.encode(body))
+      for (const chunk of chunks) controller.enqueue(encoder.encode(chunk))
       controller.close()
     },
   })
@@ -32,6 +36,27 @@ describe('streamSSEEvents', () => {
       { event: 'foo', data: { a: 1 } },
       { event: 'bar', data: { b: 2 } },
     ])
+  })
+
+  it('reassembles an event split across multiple network chunks', async () => {
+    const fullEvent = 'event: foo\ndata: {"a":1}\n\n'
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        fakeSseResponseChunks([
+          fullEvent.slice(0, 12), // splits mid "data:" line
+          fullEvent.slice(12),
+        ]),
+      ),
+    )
+
+    const config = { baseUrl: 'https://api.example.com', apiKey: 'klap_test_key' }
+    const events: unknown[] = []
+    for await (const event of streamSSEEvents(config, '/v1/foo', new AbortController().signal)) {
+      events.push(event)
+    }
+
+    expect(events).toEqual([{ event: 'foo', data: { a: 1 } }])
   })
 
   it('throws MissingCredentialError when no apiKey is configured', async () => {
@@ -77,6 +102,23 @@ describe('streamChargeEvents', () => {
       { id: 'ch_1', status: 'pending' },
       { id: 'ch_1', status: 'confirmed' },
     ])
+  })
+
+  it('yields a charge event regardless of whether the event or data line comes first', async () => {
+    const sseBody = 'data: {"id":"ch_1","status":"pending"}\nevent: charge\n\n'
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(fakeSseResponse(sseBody)))
+
+    const config = { baseUrl: 'https://api.example.com', apiKey: 'klap_test_key' }
+    const events: unknown[] = []
+    for await (const charge of streamChargeEvents(
+      config,
+      '/v1/charges/ch_1/events',
+      new AbortController().signal,
+    )) {
+      events.push(charge)
+    }
+
+    expect(events).toEqual([{ id: 'ch_1', status: 'pending' }])
   })
 
   it('sends the Bearer apiKey header and the right Accept header', async () => {
