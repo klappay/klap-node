@@ -79,7 +79,7 @@ const underpaid = await charge.waitFor('charge.underpaid')
 expect(underpaid.amountReceived).toBe(4)
 ```
 
-See [`charges.md`](./charges.md#waitforevent-options) for `waitFor()` in
+See [`charges.md`](./charges.md#waitfor-event-options) for `waitFor()` in
 depth.
 
 ## Testing your webhook handler without deploying anything

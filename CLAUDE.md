@@ -38,11 +38,11 @@ the surrounding code while touching it. A test has to be a real check:
 
 No false positives: a green suite has to mean the thing actually works.
 Every method that talks to the network goes through the shared
-`request()`/`resolveOrganizationId()` in `http.ts` — those get real
-(unmocked-`fetch`) tests covering URL/query building, auth-header
-selection, and error parsing; every resource wrapper (`charges.ts`,
-`users.ts`, etc.) mocks `./http` and asserts the exact path/body/query/
-auth it sends, not just "did it resolve." When touching a function or
+`request()` in `http.ts` — that gets real (unmocked-`fetch`) tests
+covering URL/query building, auth-header selection, and error parsing;
+every resource wrapper (`charges.ts`, `webhooks.ts`, etc.) mocks
+`./http` and asserts the exact path/body/query/auth it sends, not just
+"did it resolve." When touching a function or
 reviewing one in passing: look for a branch/edge case/error path with no
 test, and for an existing test that's gone stale relative to the code
 (asserts a shape the code no longer produces) — fix or delete it rather
@@ -106,9 +106,12 @@ after not touching this code for a month, it's worth a line.
 folder — `docs/.vitepress/` lives inside it, not as a parallel copy —
 so editing a `docs/*.md` file changes what the site shows with no sync
 step to remember. `pnpm docs:dev` runs it locally, `pnpm docs:build`
-does a static build (fails loudly on a dead internal link, which
+does a static build (fails loudly on a link to a missing *file*, which
 GitHub's Markdown rendering silently doesn't — worth running after
-touching cross-doc links), `pnpm docs:preview` serves that build.
+touching cross-doc links; it does **not** validate the `#anchor` part
+of a link, so a heading rename can still leave a dead in-page fragment
+behind — grep for the old heading text after renaming one), `pnpm
+docs:preview` serves that build.
 `.github/workflows/docs.yml` builds and deploys `docs/.vitepress/dist`
 to GitHub Pages on every push to `main` that touches `docs/**` — no
 separate deploy step to run by hand.
