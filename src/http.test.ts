@@ -124,6 +124,18 @@ describe('request()', () => {
     expect(err).toMatchObject({ status: 500, code: 'unknown_error', message: 'Request failed' })
   })
 
+  it('falls back to a generic KlapApiError when the error body is not valid JSON', async () => {
+    fetchMock.mockResolvedValue(new Response('<html>502 Bad Gateway</html>', { status: 502 }))
+
+    const err: unknown = await request(
+      { ...baseConfig, apiKey: 'k' },
+      { method: 'GET', path: '/v1/x' },
+    ).catch((e) => e)
+
+    expect(err).toBeInstanceOf(KlapApiError)
+    expect(err).toMatchObject({ status: 502, code: 'unknown_error', message: 'Request failed' })
+  })
+
   it('logs method + URL to console.debug only when config.debug is true', async () => {
     const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {})
     fetchMock.mockImplementation(() => new Response(JSON.stringify({}), { status: 200 }))

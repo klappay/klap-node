@@ -56,7 +56,7 @@ export async function request<T>(config: HttpConfig, options: RequestOptions): P
   if (res.status === 204) return undefined as T
 
   if (!res.ok) {
-    const data = (await res.json()) as unknown
+    const data: unknown = await res.json().catch(() => undefined)
     const parsed = ErrorPayloadSchema.safeParse(data)
     const error = parsed.success ? parsed.data.error : undefined
     throw new KlapApiError(
