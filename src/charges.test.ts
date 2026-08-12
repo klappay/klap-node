@@ -31,6 +31,7 @@ const FAKE_CHARGE: Charge = {
   metadata: null,
   redirectUrl: null,
   checkoutUrl: null,
+  splitRecipients: [],
   createdAt: '2026-01-01T00:00:00.000Z',
   expiresAt: '2026-01-01T01:00:00.000Z',
   confirmedAt: null,
