@@ -12,6 +12,7 @@ describe('package public exports', () => {
     expect(sdk.createSandboxClient).toBeTypeOf('function')
     expect(sdk.createDistributionsClient).toBeTypeOf('function')
     expect(sdk.createNetworksClient).toBeTypeOf('function')
+    expect(sdk.createRecipientsClient).toBeTypeOf('function')
     expect(sdk.streamSSEEvents).toBeTypeOf('function')
   })
 

@@ -9,6 +9,7 @@ export default defineConfig({
     'src/sandbox.ts',
     'src/distributions.ts',
     'src/networks.ts',
+    'src/recipients.ts',
   ],
   format: ['cjs', 'esm'],
   dts: true,

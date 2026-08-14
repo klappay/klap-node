@@ -3,6 +3,7 @@ import { createDistributionsClient } from './distributions'
 import type { HttpConfig } from './http'
 import { createMetricsClient } from './metrics'
 import { createNetworksClient } from './networks'
+import { createRecipientsClient } from './recipients'
 import { createSandboxClient } from './sandbox'
 import { createWebhooksClient } from './webhooks'
 
@@ -32,6 +33,7 @@ export function createClient(options: CreateClientOptions) {
     sandbox: createSandboxClient(config),
     distributions: createDistributionsClient(config),
     networks: createNetworksClient(config),
+    recipients: createRecipientsClient(config),
     /** `klap_live_...` / `klap_test_...` — changes what every subsequent call authenticates with, no need to build a new client. */
     setApiKey(apiKey: string): void {
       config.apiKey = apiKey

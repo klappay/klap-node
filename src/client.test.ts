@@ -11,6 +11,7 @@ describe('createClient()', () => {
     expect(klap.sandbox).toBeDefined()
     expect(klap.distributions).toBeDefined()
     expect(klap.networks).toBeDefined()
+    expect(klap.recipients).toBeDefined()
     expect(klap.setApiKey).toBeTypeOf('function')
   })
 })

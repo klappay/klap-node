@@ -11,6 +11,7 @@ export { createMetricsClient } from './metrics'
 export { createSandboxClient } from './sandbox'
 export { createDistributionsClient } from './distributions'
 export { createNetworksClient } from './networks'
+export { createRecipientsClient } from './recipients'
 export { streamSSEEvents } from './sse'
 export type { SSEEvent } from './sse'
 

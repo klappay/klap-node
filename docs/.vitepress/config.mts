@@ -36,6 +36,7 @@ export default defineConfig({
         items: [
           { text: 'Charges', link: '/charges' },
           { text: 'Webhooks', link: '/webhooks' },
+          { text: 'Recipients', link: '/recipients' },
           { text: 'Metrics', link: '/metrics' },
           { text: 'Distributions', link: '/distributions' },
           { text: 'Networks', link: '/networks' },

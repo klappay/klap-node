@@ -23,6 +23,9 @@ features:
   - title: Webhooks
     details: Register endpoints, verify signatures, and parse events with constructEvent.
     link: /webhooks
+  - title: Recipients
+    details: Register trusted split recipients and reference them by id in a charge split.
+    link: /recipients
   - title: Metrics
     details: Ad-hoc analytics over your charges, transactions, and distributions data.
     link: /metrics

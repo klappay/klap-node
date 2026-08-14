@@ -91,6 +91,27 @@ describe('createChargesClient().create()', () => {
   })
 })
 
+describe('createChargesClient().create() splitRecipients', () => {
+  beforeEach(() => {
+    requestMock.mockReset()
+    requestMock.mockResolvedValue(FAKE_CHARGE)
+  })
+
+  it('sends split entries keyed by recipientId, not a raw address', async () => {
+    await createChargesClient(config).create({
+      amount: 10,
+      acceptedPayments: [{ token: 'USDC', network: 'base' }],
+      expiresIn: 3600,
+      splitRecipients: [{ recipientId: 'rc_1', percent: 10, label: 'sales rep' }],
+    })
+
+    const body = requestMock.mock.calls[0]?.[1].body as {
+      splitRecipients: { recipientId: string }[]
+    }
+    expect(body.splitRecipients).toEqual([{ recipientId: 'rc_1', percent: 10, label: 'sales rep' }])
+  })
+})
+
 describe('createChargesClient().list()', () => {
   beforeEach(() => {
     requestMock.mockReset()

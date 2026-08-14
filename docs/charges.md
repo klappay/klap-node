@@ -22,7 +22,7 @@ const charge = await klap.charges.create({
     klappay: { products: [{ name: 'Pro plan', quantity: 1 }] }, // reserved, see below
   },
   redirectUrl: 'https://yourapp.com/thank-you', // optional, see below
-  splitRecipients: [{ address: '0x...', percent: 10, label: 'sales rep' }], // optional, see below
+  splitRecipients: [{ recipientId: 'rc_...', percent: 10, label: 'sales rep' }], // optional, see below
 })
 ```
 
@@ -42,15 +42,26 @@ gets sent once that page's charge resolves; ignored otherwise. Must be
 it's `null` unless hosted checkout is configured for your account, and
 present on every read (`create()`, `get()`, `list()`) once it is.
 
-`splitRecipients` routes a slice of the charge to up to 5 extra
-addresses (e.g. a supplier, or whoever closed the sale) — each with a
-`percent` and an optional `label` for your own bookkeeping. **`percent`
-is of *your own* net share (`100 - feePercent`), not the charge's gross
-`amount`** — Klappay's fee is computed on the gross amount first and is
-never diluted by how you split what's left. Frozen at creation like
-everything else that shapes the split address; a request whose percents
-don't fit within your available share is rejected. `charge.splitRecipients`
-echoes back whatever was set — an empty array if none.
+### `splitRecipients`
+
+Routes a slice of the charge to up to 5 extra recipients (e.g. a
+supplier, or whoever closed the sale) — each identified by `recipientId`
+(from [`klap.recipients.create()`](./recipients.md), **not** a raw
+address) plus a `percent` and an optional `label` for your own
+bookkeeping. **`percent` is of *your own* net share (`100 - feePercent`),
+not the charge's gross `amount`** — Klappay's fee is computed on the
+gross amount first and is never diluted by how you split what's left.
+Frozen at creation like everything else that shapes the split address; a
+request whose percents don't fit within your available share is
+rejected. Requires the `charges:split_write` scope in addition to
+`charges:write`.
+
+The response shape is different from the request on purpose:
+`charge.splitRecipients` echoes back the resolved `address` for each
+entry (not the `recipientId` you submitted) — an empty array if none —
+so reading a charge back tells you where the money actually went without
+a second lookup. See [`recipients.md`](./recipients.md) for registering
+recipients and the full request/response shape split.
 
 `acceptedPayments` lets the payer choose which rail to actually use — at
 least one `(token, network)` pair, up to 14. Every transfer on an

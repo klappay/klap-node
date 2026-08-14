@@ -26,7 +26,7 @@ notice than a required field that fails loudly if you forget it.
 
 `apiKey` is a `klap_live_...`/`klap_test_...` key — it's required for
 every method on the client (`charges`, `webhooks`, `sandbox`,
-`distributions`, `networks`, `metrics`).
+`distributions`, `networks`, `metrics`, `recipients`).
 
 Optional: `debug: true` (logs every outgoing request's method + URL —
 never the `Authorization` header — to help diagnose what the SDK is
@@ -61,6 +61,8 @@ including what those methods actually do and how they resolve/reject.
   until it resolves.
 - [`webhooks.md`](./webhooks.md) — registering webhooks, and verifying
   signatures on what you receive.
+- [`recipients.md`](./recipients.md) — registering trusted split
+  recipients, and referencing them by `recipientId` in a charge split.
 - [`distributions.md`](./distributions.md) — discovering and streaming
   claimable 0xSplits payouts, for keepers/bots, not a typical merchant
   integration.

@@ -9,7 +9,7 @@
     "url": "git+https://github.com/klappay/klap-node.git"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "packageManager": "pnpm@10.33.0",
   "type": "module",
@@ -51,6 +51,11 @@
       "types": "./dist/networks.d.ts",
       "import": "./dist/networks.js",
       "require": "./dist/networks.cjs"
+    },
+    "./recipients": {
+      "types": "./dist/recipients.d.ts",
+      "import": "./dist/recipients.js",
+      "require": "./dist/recipients.cjs"
     }
   },
   "files": ["dist", "LICENSE", "README.md", "logo.png", "docs"],
@@ -74,7 +79,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@klappay/types": "^2.0.4"
+    "@klappay/types": "^3.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",

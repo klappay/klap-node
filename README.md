@@ -54,6 +54,7 @@ versions of these docs, regenerated on every deploy, for feeding an agent or MCP
 | [`docs/getting-started.md`](https://github.com/klappay/klap-node/tree/main/docs/getting-started.md) | Install, client setup, your first charge |
 | [`docs/charges.md`](https://github.com/klappay/klap-node/tree/main/docs/charges.md) | The core resource — create, list, paginate, `waitForConfirmation`/`waitForSettlement` in depth |
 | [`docs/webhooks.md`](https://github.com/klappay/klap-node/tree/main/docs/webhooks.md) | Registering webhooks, verifying signatures, `constructEvent` |
+| [`docs/recipients.md`](https://github.com/klappay/klap-node/tree/main/docs/recipients.md) | Registering trusted split recipients, and referencing them by `recipientId` in a charge split |
 | [`docs/distributions.md`](https://github.com/klappay/klap-node/tree/main/docs/distributions.md) | Discovering and streaming claimable 0xSplits payouts — for keepers/bots, not a typical merchant integration |
 | [`docs/networks.md`](https://github.com/klappay/klap-node/tree/main/docs/networks.md) | The live `(token, network)` capability matrix — build a payment-method picker instead of hardcoding it |
 | [`docs/metrics.md`](https://github.com/klappay/klap-node/tree/main/docs/metrics.md) | Ad-hoc analytics over your charges/transactions/distributions data |
