@@ -4,6 +4,13 @@
 from `@klappay/node/networks` (see
 [`tree-shaking.md`](./tree-shaking.md)). Requires an `apiKey`.
 
+```ts
+import { createNetworksClient } from '@klappay/node/networks'
+
+const networks = createNetworksClient({ baseUrl: '...', apiKey: '...' })
+const capabilities = await networks.get()
+```
+
 ## `get()`
 
 ```ts

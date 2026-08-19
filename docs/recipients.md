@@ -3,6 +3,13 @@
 `klap.recipients` — also available standalone as `createRecipientsClient`
 from `@klappay/node/recipients`. Requires an `apiKey`.
 
+```ts
+import { createRecipientsClient } from '@klappay/node/recipients'
+
+const recipients = createRecipientsClient({ baseUrl: '...', apiKey: '...' })
+const recipient = await recipients.create({ address: '0x...ab', label: 'sales rep' })
+```
+
 A recipient is a trusted EVM address you register once, so a charge's
 [`splitRecipients`](./charges.md) can reference it by `id` instead of a
 raw address. This exists to close a redirect risk: with `charges:write`

@@ -4,6 +4,17 @@
 `@klappay/node/charges` (see [`tree-shaking.md`](./tree-shaking.md)).
 Requires an `apiKey`.
 
+```ts
+import { createChargesClient } from '@klappay/node/charges'
+
+const charges = createChargesClient({ baseUrl: '...', apiKey: '...' })
+const charge = await charges.create({
+  amount: 49.9,
+  acceptedPayments: [{ token: 'USDC', network: 'base' }],
+  expiresIn: 3600,
+})
+```
+
 ## `create(input)`
 
 ```ts

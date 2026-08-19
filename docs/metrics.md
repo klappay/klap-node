@@ -5,6 +5,18 @@ from `@klappay/node/metrics` (see [`tree-shaking.md`](./tree-shaking.md)).
 Requires an `apiKey` — every key only ever sees its own tenant's data,
 so there's no organization id to pass anywhere.
 
+```ts
+import { createMetricsClient } from '@klappay/node/metrics'
+
+const metrics = createMetricsClient({ baseUrl: '...', apiKey: '...' })
+const result = await metrics.query({
+  resource: 'charges',
+  environment: 'live',
+  dateRange: { field: 'createdAt', from: '2026-07-01T00:00:00.000Z', to: '2026-08-01T00:00:00.000Z' },
+  metrics: [{ aggregation: 'count', alias: 'total' }],
+})
+```
+
 ## `query(input)`
 
 Ad-hoc analytics over your `charges`/`transactions`/`distributions`

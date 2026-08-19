@@ -5,6 +5,16 @@ from `@klappay/node/webhooks`. The management methods require an
 `apiKey`; the signature-verification helpers need no credential at all
 (they're pure functions, no network call).
 
+```ts
+import { createWebhooksClient } from '@klappay/node/webhooks'
+
+const webhooks = createWebhooksClient({ baseUrl: '...', apiKey: '...' })
+const webhook = await webhooks.create({
+  url: 'https://your-server.com/webhooks/klap',
+  events: ['charge.confirmed', 'charge.settled'],
+})
+```
+
 ## Registering a webhook
 
 ```ts

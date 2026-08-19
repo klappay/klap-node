@@ -4,6 +4,13 @@
 `createDistributionsClient` from `@klappay/node/distributions` (see
 [`tree-shaking.md`](./tree-shaking.md)). Requires an `apiKey`.
 
+```ts
+import { createDistributionsClient } from '@klappay/node/distributions'
+
+const distributions = createDistributionsClient({ baseUrl: '...', apiKey: '...' })
+const page = await distributions.list()
+```
+
 This is for **keepers/bots**, not a typical merchant integration.
 0xSplits' `distribute()` is permissionless — anyone can call it and
 receive a small `distributorFeePercent` reward — and this resource
