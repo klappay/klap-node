@@ -1,5 +1,15 @@
 # Testing your integration
 
+`klap.sandbox` — also available standalone as `createSandboxClient` from
+`@klappay/node/sandbox` (see [`tree-shaking.md`](./tree-shaking.md)).
+
+```ts
+import { createSandboxClient } from '@klappay/node/sandbox'
+
+const sandbox = createSandboxClient({ baseUrl: '...', apiKey: '...' })
+await sandbox.confirm(charge.id)
+```
+
 Requires a `test`-environment API key (`klap_test_...`). `live` keys
 don't have access to `klap.sandbox`, and a `test` key can only ever act
 on a `test` charge — not a `live` one, even in the same organization.
