@@ -10,6 +10,10 @@ const recipients = createRecipientsClient({ baseUrl: '...', apiKey: '...' })
 const recipient = await recipients.create({ address: '0x...ab', label: 'sales rep' })
 ```
 
+`baseUrl`/`apiKey` are optional — they fall back to `KLAP_BASE_URL`/
+`KLAP_RECIPIENTS_API_KEY` (see [`getting-started.md`](./getting-started.md#environment-variables))
+if omitted.
+
 A recipient is a trusted EVM address you register once, so a charge's
 [`splitRecipients`](./charges.md) can reference it by `id` instead of a
 raw address. This exists to close a redirect risk: with `charges:write`

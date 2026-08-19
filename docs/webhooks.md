@@ -15,6 +15,10 @@ const webhook = await webhooks.create({
 })
 ```
 
+`baseUrl`/`apiKey` are optional — they fall back to `KLAP_BASE_URL`/
+`KLAP_WEBHOOKS_API_KEY` (see [`getting-started.md`](./getting-started.md#environment-variables))
+if omitted.
+
 ## Registering a webhook
 
 ```ts

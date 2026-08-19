@@ -1,14 +1,25 @@
 import { ErrorPayloadSchema } from '@klappay/types'
-import { KlapApiError, MissingCredentialError } from './errors'
+import { KlapApiError, MissingBaseUrlError, MissingCredentialError } from './errors'
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
 
 export type HttpConfig = {
-  baseUrl: string
+  /** Falls back to `process.env.KLAP_BASE_URL` when omitted. */
+  baseUrl?: string
   apiKey?: string
   debug?: boolean
   /** Aborts a request after this many ms. Default 30s — the `waitFor*()` methods use their own `AbortSignal` and are unaffected. */
   timeoutMs?: number
+}
+
+export function withApiKeyEnvFallback(passedConfig: HttpConfig, envVar: string): HttpConfig {
+  return {
+    ...passedConfig,
+    // getter, not a plain merge — keeps klap.setApiKey()'s mutation of the shared config visible here
+    get apiKey() {
+      return passedConfig.apiKey ?? process.env[envVar]
+    },
+  }
 }
 
 type QueryValue = string | number | boolean | undefined
@@ -37,9 +48,15 @@ function resolveAuthHeader(config: HttpConfig, options: RequestOptions): string 
   return `Bearer ${config.apiKey}`
 }
 
+function resolveBaseUrl(config: HttpConfig, options: RequestOptions): string {
+  const baseUrl = config.baseUrl ?? process.env.KLAP_BASE_URL
+  if (!baseUrl) throw new MissingBaseUrlError(options.path)
+  return baseUrl
+}
+
 export async function request<T>(config: HttpConfig, options: RequestOptions): Promise<T> {
   const authHeader = resolveAuthHeader(config, options)
-  const url = buildUrl(config.baseUrl, options.path, options.query)
+  const url = buildUrl(resolveBaseUrl(config, options), options.path, options.query)
 
   if (config.debug) console.debug('[klap-sdk]', options.method, url)
 

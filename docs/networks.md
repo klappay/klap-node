@@ -11,6 +11,10 @@ const networks = createNetworksClient({ baseUrl: '...', apiKey: '...' })
 const capabilities = await networks.get()
 ```
 
+`baseUrl`/`apiKey` are optional — they fall back to `KLAP_BASE_URL`/
+`KLAP_NETWORKS_API_KEY` (see [`getting-started.md`](./getting-started.md#environment-variables))
+if omitted.
+
 ## `get()`
 
 ```ts

@@ -6,10 +6,11 @@ import {
   type PendingDistribution,
   type PendingDistributionEvent,
 } from '@klappay/types'
-import { type HttpConfig, request } from './http'
+import { type HttpConfig, request, withApiKeyEnvFallback } from './http'
 import { streamSSEEvents } from './sse'
 
-export function createDistributionsClient(config: HttpConfig) {
+export function createDistributionsClient(passedConfig: HttpConfig = {}) {
+  const config = withApiKeyEnvFallback(passedConfig, 'KLAP_DISTRIBUTIONS_API_KEY')
   const list = (input: PaginationQueryRequest = { limit: PAGINATION_LIMIT_DEFAULT }) =>
     request<PaginatedPendingDistributions>(config, {
       method: 'GET',

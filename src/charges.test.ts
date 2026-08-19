@@ -1,8 +1,11 @@
 import type { Charge, TimelineEvent } from '@klappay/types'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createChargesClient } from './charges'
 
-vi.mock('./http', () => ({ request: vi.fn() }))
+vi.mock('./http', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./http')>()
+  return { ...actual, request: vi.fn() }
+})
 vi.mock('./sse', () => ({ streamChargeEvents: vi.fn() }))
 
 const { request } = await import('./http')
@@ -251,5 +254,36 @@ describe('createChargesClient().watch()', () => {
       '/v1/charges/ch_fake/events',
       expect.any(AbortSignal),
     )
+  })
+})
+
+describe('createChargesClient() env fallback', () => {
+  beforeEach(() => {
+    requestMock.mockReset()
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('falls back to KLAP_CHARGES_API_KEY when apiKey is omitted', async () => {
+    vi.stubEnv('KLAP_CHARGES_API_KEY', 'klap_env_key')
+    requestMock.mockResolvedValue(FAKE_CHARGE)
+
+    await createChargesClient({ baseUrl: 'https://api.example.com' }).get('ch_fake')
+
+    expect(requestMock.mock.calls[0]?.[0]).toMatchObject({ apiKey: 'klap_env_key' })
+  })
+
+  it('prefers an explicit apiKey over KLAP_CHARGES_API_KEY', async () => {
+    vi.stubEnv('KLAP_CHARGES_API_KEY', 'klap_env_key')
+    requestMock.mockResolvedValue(FAKE_CHARGE)
+
+    await createChargesClient({
+      baseUrl: 'https://api.example.com',
+      apiKey: 'klap_explicit',
+    }).get('ch_fake')
+
+    expect(requestMock.mock.calls[0]?.[0]).toMatchObject({ apiKey: 'klap_explicit' })
   })
 })

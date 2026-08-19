@@ -11,6 +11,10 @@ const distributions = createDistributionsClient({ baseUrl: '...', apiKey: '...' 
 const page = await distributions.list()
 ```
 
+`baseUrl`/`apiKey` are optional — they fall back to `KLAP_BASE_URL`/
+`KLAP_DISTRIBUTIONS_API_KEY` (see [`getting-started.md`](./getting-started.md#environment-variables))
+if omitted.
+
 This is for **keepers/bots**, not a typical merchant integration.
 0xSplits' `distribute()` is permissionless — anyone can call it and
 receive a small `distributorFeePercent` reward — and this resource

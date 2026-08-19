@@ -4,6 +4,7 @@ import {
   ChargeUnderpaidError,
   InvalidWebhookSignatureError,
   KlapApiError,
+  MissingBaseUrlError,
   MissingCredentialError,
   SettlementFailedError,
   WaitTimeoutError,
@@ -89,6 +90,16 @@ describe('MissingCredentialError', () => {
     expect(err.name).toBe('MissingCredentialError')
     expect(err.message).toBe(
       'charges.create() requires an apiKey — pass it to createClient(), or call klap.setApiKey() first.',
+    )
+  })
+})
+
+describe('MissingBaseUrlError', () => {
+  it('explains how to fix a missing baseUrl', () => {
+    const err = new MissingBaseUrlError('/v1/charges')
+    expect(err.name).toBe('MissingBaseUrlError')
+    expect(err.message).toBe(
+      '/v1/charges requires a baseUrl — pass it to createClient(), or set KLAP_BASE_URL.',
     )
   })
 })

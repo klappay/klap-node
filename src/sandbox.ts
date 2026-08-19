@@ -1,7 +1,8 @@
 import type { Charge, TriggerableChargeEvent } from '@klappay/types'
-import { type HttpConfig, request } from './http'
+import { type HttpConfig, request, withApiKeyEnvFallback } from './http'
 
-export function createSandboxClient(config: HttpConfig) {
+export function createSandboxClient(passedConfig: HttpConfig = {}) {
+  const config = withApiKeyEnvFallback(passedConfig, 'KLAP_SANDBOX_API_KEY')
   const trigger = (
     chargeId: string,
     event: TriggerableChargeEvent,

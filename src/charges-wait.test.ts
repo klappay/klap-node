@@ -8,7 +8,10 @@ import {
   WaitTimeoutError,
 } from './errors'
 
-vi.mock('./http', () => ({ request: vi.fn() }))
+vi.mock('./http', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./http')>()
+  return { ...actual, request: vi.fn() }
+})
 vi.mock('./sse', () => ({ streamChargeEvents: vi.fn() }))
 
 const { request } = await import('./http')

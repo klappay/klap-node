@@ -109,8 +109,11 @@ replay protection".
 ## `MissingCredentialError`
 
 Thrown immediately, client-side, when you call a method that needs an
-`apiKey` you didn't provide to `createClient()` — pass it there, or call
-`klap.setApiKey()` first. No request ever reaches the API in this case.
+`apiKey` that resolved to nothing — not passed to `createClient()`, and
+no matching `KLAP_*_API_KEY` env var set either (see
+[`getting-started.md`](./getting-started.md#environment-variables)).
+Pass it explicitly, set the env var, or call `klap.setApiKey()` first.
+No request ever reaches the API in this case.
 
 ```ts
 import { createClient, MissingCredentialError } from '@klappay/node'
@@ -126,6 +129,27 @@ try {
 } catch (err) {
   if (err instanceof MissingCredentialError) {
     console.log(err.message) // "charges.create() requires an apiKey — ..."
+  }
+}
+```
+
+## `MissingBaseUrlError`
+
+Thrown immediately, client-side, the same way as `MissingCredentialError`
+above, but for `baseUrl` — not passed to `createClient()`/`create*Client()`,
+and `KLAP_BASE_URL` isn't set either. No request ever reaches the API in
+this case.
+
+```ts
+import { createChargesClient, MissingBaseUrlError } from '@klappay/node'
+
+const charges = createChargesClient({ apiKey: 'klap_test_...' })
+
+try {
+  await charges.get('ch_1')
+} catch (err) {
+  if (err instanceof MissingBaseUrlError) {
+    console.log(err.message) // "/v1/charges/ch_1 requires a baseUrl — ..."
   }
 }
 ```

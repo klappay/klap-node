@@ -9,7 +9,7 @@ import {
   type TimelineEvent,
 } from '@klappay/types'
 import { type KlapCharge, wrapCharge } from './charges-wait'
-import { type HttpConfig, request } from './http'
+import { type HttpConfig, request, withApiKeyEnvFallback } from './http'
 import { streamChargeEvents } from './sse'
 
 export type { KlapCharge, WaitOptions } from './charges-wait'
@@ -20,7 +20,8 @@ function generateIdempotencyKey(): string {
 
 export type ListChargesFilter = Partial<Omit<ListChargesInput, 'cursor'>>
 
-export function createChargesClient(config: HttpConfig) {
+export function createChargesClient(passedConfig: HttpConfig = {}) {
+  const config = withApiKeyEnvFallback(passedConfig, 'KLAP_CHARGES_API_KEY')
   const list = (input: ListChargesInput = { limit: PAGINATION_LIMIT_DEFAULT }) =>
     request<{ data: Charge[]; nextCursor: string | null; hasMore: boolean }>(config, {
       method: 'GET',

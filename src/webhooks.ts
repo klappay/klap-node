@@ -13,7 +13,7 @@ import {
   WebhookPayloadSchema,
 } from '@klappay/types'
 import { InvalidWebhookSignatureError, WebhookTimestampToleranceError } from './errors'
-import { type HttpConfig, request } from './http'
+import { type HttpConfig, request, withApiKeyEnvFallback } from './http'
 
 const DEFAULT_TOLERANCE_SECONDS = 300
 
@@ -68,7 +68,8 @@ export function constructWebhookEvent(
   return payload as TypedWebhookPayload
 }
 
-export function createWebhooksClient(config: HttpConfig) {
+export function createWebhooksClient(passedConfig: HttpConfig = {}) {
+  const config = withApiKeyEnvFallback(passedConfig, 'KLAP_WEBHOOKS_API_KEY')
   return {
     async create(input: CreateWebhookRequest): Promise<Webhook> {
       return request<Webhook>(config, { method: 'POST', path: '/v1/webhooks', body: input })

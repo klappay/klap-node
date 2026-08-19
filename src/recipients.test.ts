@@ -1,8 +1,11 @@
 import type { Recipient } from '@klappay/types'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createRecipientsClient } from './recipients'
 
-vi.mock('./http', () => ({ request: vi.fn() }))
+vi.mock('./http', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./http')>()
+  return { ...actual, request: vi.fn() }
+})
 
 const { request } = await import('./http')
 const requestMock = vi.mocked(request)
@@ -80,5 +83,36 @@ describe('createRecipientsClient()', () => {
 
     expect(requestMock.mock.calls[0]?.[1].path).toBe('/v1/recipients/rc%2F1%20x')
     expect(requestMock.mock.calls[1]?.[1].path).toBe('/v1/recipients/rc%2F1%20x')
+  })
+})
+
+describe('createRecipientsClient() env fallback', () => {
+  beforeEach(() => {
+    requestMock.mockReset()
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('falls back to KLAP_RECIPIENTS_API_KEY when apiKey is omitted', async () => {
+    vi.stubEnv('KLAP_RECIPIENTS_API_KEY', 'klap_env_key')
+    requestMock.mockResolvedValue([])
+
+    await createRecipientsClient({ baseUrl: 'https://api.example.com' }).list()
+
+    expect(requestMock.mock.calls[0]?.[0]).toMatchObject({ apiKey: 'klap_env_key' })
+  })
+
+  it('prefers an explicit apiKey over KLAP_RECIPIENTS_API_KEY', async () => {
+    vi.stubEnv('KLAP_RECIPIENTS_API_KEY', 'klap_env_key')
+    requestMock.mockResolvedValue([])
+
+    await createRecipientsClient({
+      baseUrl: 'https://api.example.com',
+      apiKey: 'klap_explicit',
+    }).list()
+
+    expect(requestMock.mock.calls[0]?.[0]).toMatchObject({ apiKey: 'klap_explicit' })
   })
 })

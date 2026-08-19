@@ -10,6 +10,10 @@ const sandbox = createSandboxClient({ baseUrl: '...', apiKey: '...' })
 await sandbox.confirm(charge.id)
 ```
 
+`baseUrl`/`apiKey` are optional — they fall back to `KLAP_BASE_URL`/
+`KLAP_SANDBOX_API_KEY` (see [`getting-started.md`](./getting-started.md#environment-variables))
+if omitted.
+
 Requires a `test`-environment API key (`klap_test_...`). `live` keys
 don't have access to `klap.sandbox`, and a `test` key can only ever act
 on a `test` charge — not a `live` one, even in the same organization.

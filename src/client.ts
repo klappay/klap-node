@@ -8,9 +8,9 @@ import { createSandboxClient } from './sandbox'
 import { createWebhooksClient } from './webhooks'
 
 export type CreateClientOptions = {
-  /** Base URL of the Klap API you're integrating with (no default — always required). */
-  baseUrl: string
-  /** `klap_live_...` / `klap_test_...` — required for every method. */
+  /** Base URL of the Klap API you're integrating with. Falls back to `process.env.KLAP_BASE_URL`. */
+  baseUrl?: string
+  /** `klap_live_...` / `klap_test_...` — required for every method. Falls back to `process.env.KLAP_API_KEY`. */
   apiKey?: string
   /** Logs each outgoing request (method + URL, never the Authorization header). */
   debug?: boolean
@@ -18,10 +18,10 @@ export type CreateClientOptions = {
   timeoutMs?: number
 }
 
-export function createClient(options: CreateClientOptions) {
+export function createClient(options: CreateClientOptions = {}) {
   const config: HttpConfig = {
     baseUrl: options.baseUrl,
-    apiKey: options.apiKey,
+    apiKey: options.apiKey ?? process.env.KLAP_API_KEY,
     debug: options.debug,
     timeoutMs: options.timeoutMs,
   }

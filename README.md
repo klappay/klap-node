@@ -24,8 +24,8 @@ npm install @klappay/node
 import { createClient } from '@klappay/node'
 
 const klap = createClient({
-  baseUrl: 'https://your-klap-api-host', // no default — always required
-  apiKey: process.env.KLAP_API_KEY,
+  baseUrl: 'https://your-klap-api-host', // no hardcoded default — or set KLAP_BASE_URL and omit this
+  apiKey: process.env.KLAP_API_KEY, // or just set KLAP_API_KEY and omit this too
 })
 
 const charge = await klap.charges.create({

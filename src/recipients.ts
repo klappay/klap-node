@@ -1,7 +1,8 @@
 import type { CreateRecipientRequest, Recipient } from '@klappay/types'
-import { type HttpConfig, request } from './http'
+import { type HttpConfig, request, withApiKeyEnvFallback } from './http'
 
-export function createRecipientsClient(config: HttpConfig) {
+export function createRecipientsClient(passedConfig: HttpConfig = {}) {
+  const config = withApiKeyEnvFallback(passedConfig, 'KLAP_RECIPIENTS_API_KEY')
   return {
     async create(input: CreateRecipientRequest): Promise<Recipient> {
       return request<Recipient>(config, { method: 'POST', path: '/v1/recipients', body: input })

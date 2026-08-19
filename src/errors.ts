@@ -83,3 +83,10 @@ export class MissingCredentialError extends Error {
     this.name = 'MissingCredentialError'
   }
 }
+
+export class MissingBaseUrlError extends Error {
+  constructor(context: string) {
+    super(`${context} requires a baseUrl — pass it to createClient(), or set KLAP_BASE_URL.`)
+    this.name = 'MissingBaseUrlError'
+  }
+}

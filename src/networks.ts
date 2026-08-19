@@ -1,7 +1,8 @@
 import type { Capabilities } from '@klappay/types'
-import { type HttpConfig, request } from './http'
+import { type HttpConfig, request, withApiKeyEnvFallback } from './http'
 
-export function createNetworksClient(config: HttpConfig) {
+export function createNetworksClient(passedConfig: HttpConfig = {}) {
+  const config = withApiKeyEnvFallback(passedConfig, 'KLAP_NETWORKS_API_KEY')
   return {
     /**
      * The live `(token, network)` capability matrix for the calling key's

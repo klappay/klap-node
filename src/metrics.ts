@@ -1,7 +1,8 @@
 import type { MetricsQueryRequest, MetricsQueryResult } from '@klappay/types'
-import { type HttpConfig, request } from './http'
+import { type HttpConfig, request, withApiKeyEnvFallback } from './http'
 
-export function createMetricsClient(config: HttpConfig) {
+export function createMetricsClient(passedConfig: HttpConfig = {}) {
+  const config = withApiKeyEnvFallback(passedConfig, 'KLAP_METRICS_API_KEY')
   return {
     async query(input: MetricsQueryRequest): Promise<MetricsQueryResult> {
       return request<MetricsQueryResult>(config, {

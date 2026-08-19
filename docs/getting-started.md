@@ -15,18 +15,25 @@ need to install it separately just to use the SDK.
 import { createClient } from '@klappay/node'
 
 const klap = createClient({
-  baseUrl: 'https://your-klap-api-host', // required, no default
+  baseUrl: 'https://your-klap-api-host',
   apiKey: process.env.KLAP_API_KEY,
 })
 ```
 
-`baseUrl` has no default on purpose — there's no single hardcoded API
-host to fall back to, and a wrong silent default is a much harder bug to
-notice than a required field that fails loudly if you forget it.
+`baseUrl` has no *hardcoded* default on purpose — there's no single API
+host every integration would want, and a wrong silent default is a much
+harder bug to notice than one that fails loudly. It still has to come
+from somewhere, though: pass it explicitly (shown above), or set
+`KLAP_BASE_URL` and drop the option entirely — `createClient()` falls
+back to it.
 
 `apiKey` is a `klap_live_...`/`klap_test_...` key — it's required for
 every method on the client (`charges`, `webhooks`, `sandbox`,
-`distributions`, `networks`, `metrics`, `recipients`).
+`distributions`, `networks`, `metrics`, `recipients`). The example above
+reads it from `process.env` manually, which still works, but is now
+redundant — `createClient()` already falls back to `KLAP_API_KEY` on its
+own, so `createClient({ baseUrl: '...' })` alone is enough once that
+variable is set.
 
 Optional: `debug: true` (logs every outgoing request's method + URL —
 never the `Authorization` header — to help diagnose what the SDK is
@@ -46,6 +53,46 @@ const klap = createClient({
 
 `apiKey` can also change after construction, without building a new
 client — `klap.setApiKey()`.
+
+## Environment variables
+
+Every `create*Client()` — including the standalone ones documented in
+[`tree-shaking.md`](./tree-shaking.md) — falls back to `process.env`
+when `baseUrl`/`apiKey` are omitted, so a fully env-configured project
+never has to pass either:
+
+```ts
+import { createRecipientsClient } from '@klappay/node/recipients'
+
+const recipients = createRecipientsClient() // reads KLAP_BASE_URL + KLAP_RECIPIENTS_API_KEY
+```
+
+`KLAP_BASE_URL` is shared by every client — one Klap API host per
+process. `apiKey` is scoped per resource instead, since recipients/
+charges/metrics/etc. keys carry different permissions and are
+deliberately never the same key (see
+[`recipients.md`](./recipients.md)'s scope-separation section):
+
+| Client | Env var |
+|---|---|
+| `createClient()` | `KLAP_API_KEY` |
+| `createChargesClient()` | `KLAP_CHARGES_API_KEY` |
+| `createWebhooksClient()` | `KLAP_WEBHOOKS_API_KEY` |
+| `createMetricsClient()` | `KLAP_METRICS_API_KEY` |
+| `createSandboxClient()` | `KLAP_SANDBOX_API_KEY` |
+| `createDistributionsClient()` | `KLAP_DISTRIBUTIONS_API_KEY` |
+| `createNetworksClient()` | `KLAP_NETWORKS_API_KEY` |
+| `createRecipientsClient()` | `KLAP_RECIPIENTS_API_KEY` |
+
+An explicit `apiKey`/`baseUrl` argument always wins over its env var.
+Going through the composed `createClient()`, `KLAP_API_KEY` (if set)
+is used for every resource uniformly — the resource-specific vars only
+kick in when going through a *standalone* `create*Client()` directly,
+or when `createClient()` has no `apiKey` option and `KLAP_API_KEY` isn't
+set either. If nothing resolves at all, the first call that needs it
+throws `MissingBaseUrlError`/`MissingCredentialError` — same as passing
+neither today, just discovered at the first request instead of at
+construction for `baseUrl`.
 
 ## Your first charge
 

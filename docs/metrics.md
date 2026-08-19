@@ -17,6 +17,10 @@ const result = await metrics.query({
 })
 ```
 
+`baseUrl`/`apiKey` are optional — they fall back to `KLAP_BASE_URL`/
+`KLAP_METRICS_API_KEY` (see [`getting-started.md`](./getting-started.md#environment-variables))
+if omitted.
+
 ## `query(input)`
 
 Ad-hoc analytics over your `charges`/`transactions`/`distributions`

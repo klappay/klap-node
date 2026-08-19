@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { KlapApiError, MissingCredentialError } from './errors'
+import { KlapApiError, MissingBaseUrlError, MissingCredentialError } from './errors'
 import { request } from './http'
 
 const baseConfig = { baseUrl: 'https://api.example.com' }
@@ -14,6 +14,32 @@ describe('request()', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
+  })
+
+  it('falls back to KLAP_BASE_URL when config.baseUrl is omitted', async () => {
+    vi.stubEnv('KLAP_BASE_URL', 'https://env.example.com')
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }))
+
+    await request({ apiKey: 'k' }, { method: 'GET', path: '/v1/x' })
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('https://env.example.com/v1/x')
+  })
+
+  it('prefers an explicit config.baseUrl over KLAP_BASE_URL', async () => {
+    vi.stubEnv('KLAP_BASE_URL', 'https://env.example.com')
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }))
+
+    await request({ ...baseConfig, apiKey: 'k' }, { method: 'GET', path: '/v1/x' })
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('https://api.example.com/v1/x')
+  })
+
+  it('throws MissingBaseUrlError instead of calling fetch when no baseUrl is configured anywhere', async () => {
+    await expect(request({ apiKey: 'k' }, { method: 'GET', path: '/v1/x' })).rejects.toThrow(
+      MissingBaseUrlError,
+    )
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it('builds the URL from baseUrl + path with no query string when none is given', async () => {

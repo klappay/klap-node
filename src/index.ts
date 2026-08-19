@@ -24,4 +24,5 @@ export {
   InvalidWebhookSignatureError,
   WebhookTimestampToleranceError,
   MissingCredentialError,
+  MissingBaseUrlError,
 } from './errors'

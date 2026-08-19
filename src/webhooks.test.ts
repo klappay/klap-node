@@ -1,10 +1,13 @@
 import { createHmac } from 'node:crypto'
 import type { PaginatedWebhookDeliveries, Webhook, WebhookDelivery } from '@klappay/types'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { InvalidWebhookSignatureError, WebhookTimestampToleranceError } from './errors'
 import { constructWebhookEvent, createWebhooksClient, verifyWebhookSignature } from './webhooks'
 
-vi.mock('./http', () => ({ request: vi.fn() }))
+vi.mock('./http', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./http')>()
+  return { ...actual, request: vi.fn() }
+})
 
 const { request } = await import('./http')
 const requestMock = vi.mocked(request)
@@ -261,5 +264,36 @@ describe('createWebhooksClient() CRUD', () => {
       method: 'POST',
       path: '/v1/webhooks/wh_1/deliveries/whd_1/retry',
     })
+  })
+})
+
+describe('createWebhooksClient() env fallback', () => {
+  beforeEach(() => {
+    requestMock.mockReset()
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('falls back to KLAP_WEBHOOKS_API_KEY when apiKey is omitted', async () => {
+    vi.stubEnv('KLAP_WEBHOOKS_API_KEY', 'klap_env_key')
+    requestMock.mockResolvedValue([])
+
+    await createWebhooksClient({ baseUrl: 'https://api.example.com' }).list()
+
+    expect(requestMock.mock.calls[0]?.[0]).toMatchObject({ apiKey: 'klap_env_key' })
+  })
+
+  it('prefers an explicit apiKey over KLAP_WEBHOOKS_API_KEY', async () => {
+    vi.stubEnv('KLAP_WEBHOOKS_API_KEY', 'klap_env_key')
+    requestMock.mockResolvedValue([])
+
+    await createWebhooksClient({
+      baseUrl: 'https://api.example.com',
+      apiKey: 'klap_explicit',
+    }).list()
+
+    expect(requestMock.mock.calls[0]?.[0]).toMatchObject({ apiKey: 'klap_explicit' })
   })
 })
