@@ -38,4 +38,10 @@ features:
   - title: Sandbox testing
     details: Simulate any charge event end-to-end with no real on-chain activity.
     link: /sandbox-testing
+  - title: Errors
+    details: Every error class the SDK throws, and when — for precise try/catch handling.
+    link: /errors
+  - title: Tree-shaking
+    details: Subpath imports for minimal bundles — matters for serverless cold starts too.
+    link: /tree-shaking
 ---

@@ -45,6 +45,7 @@ place always works).
 | `@klappay/node/sandbox` | `createSandboxClient` |
 | `@klappay/node/distributions` | `createDistributionsClient` |
 | `@klappay/node/networks` | `createNetworksClient` |
+| `@klappay/node/recipients` | `createRecipientsClient` |
 
 Each `create*Client(config)` takes the same config shape `createClient()`
 does (`{ baseUrl, apiKey?, debug?, timeoutMs? }`) — you're just

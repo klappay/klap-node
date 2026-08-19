@@ -34,6 +34,16 @@ actually sending), and `timeoutMs` (aborts a request after this long;
 default 30s — a hung API or dropped connection would otherwise hang
 your code forever. The `waitFor*()` methods use their own
 `AbortSignal`/timeout logic and aren't affected by this option).
+
+```ts
+const klap = createClient({
+  baseUrl: 'https://your-klap-api-host',
+  apiKey: process.env.KLAP_API_KEY,
+  debug: true, // logs "POST https://your-klap-api-host/v1/charges" etc.
+  timeoutMs: 10_000, // abort any request that hangs past 10s
+})
+```
+
 `apiKey` can also change after construction, without building a new
 client — `klap.setApiKey()`.
 
@@ -63,18 +73,18 @@ including what those methods actually do and how they resolve/reject.
   signatures on what you receive.
 - [`recipients.md`](./recipients.md) — registering trusted split
   recipients, and referencing them by `recipientId` in a charge split.
+- [`metrics.md`](./metrics.md) — ad-hoc analytics over your charges/
+  transactions/distributions data.
 - [`distributions.md`](./distributions.md) — discovering and streaming
   claimable 0xSplits payouts, for keepers/bots, not a typical merchant
   integration.
 - [`networks.md`](./networks.md) — the live `(token, network)`
   capability matrix, for building a payment-method picker instead of
   hardcoding it.
-- [`metrics.md`](./metrics.md) — ad-hoc analytics over your charges/
-  transactions/distributions data.
-- [`errors.md`](./errors.md) — every error class the SDK throws, and
-  when.
 - [`sandbox-testing.md`](./sandbox-testing.md) — testing your
   integration end-to-end without any real on-chain activity.
+- [`errors.md`](./errors.md) — every error class the SDK throws, and
+  when.
 - [`tree-shaking.md`](./tree-shaking.md) — importing only what you use,
   for bundle-size-sensitive environments (e.g. serverless cold starts).
 
