@@ -113,11 +113,69 @@ app.post('/webhooks/klap', (req, res) => {
       res.sendStatus(400)
       return
     }
+    if (err instanceof SyntaxError) {
+      // signature checked out, but the body isn't valid JSON — a
+      // corrupted delivery, not a forgery; don't lump this in with a bad signature
+      res.sendStatus(400)
+      return
+    }
     // InvalidWebhookSignatureError — reject, don't process
     res.sendStatus(400)
   }
 })
 ```
+
+App Router's `Request` has no raw-body middleware to configure — call
+`req.text()` yourself before any JSON parsing happens:
+
+```ts
+import { WebhookTimestampToleranceError } from '@klappay/node'
+import { NextResponse } from 'next/server'
+
+export async function POST(req: Request) {
+  const rawBody = await req.text()
+
+  try {
+    const event = klap.webhooks.constructEvent(
+      rawBody,
+      req.headers.get('x-klappay-signature') ?? '',
+      process.env.KLAP_WEBHOOK_SECRET!,
+    )
+
+    switch (event.event) {
+      case 'charge.settled':
+        break
+      // ...
+    }
+
+    return new NextResponse(null, { status: 200 })
+  } catch (err) {
+    if (err instanceof WebhookTimestampToleranceError) {
+      return new NextResponse(null, { status: 400 })
+    }
+    if (err instanceof SyntaxError) {
+      return new NextResponse(null, { status: 400 })
+    }
+    return new NextResponse(null, { status: 400 })
+  }
+}
+```
+
+The only real difference from the Express handler is how the raw body is
+obtained — everything downstream of `rawBody` is identical. Whichever
+framework you use, get the raw body first: if you read it as JSON
+(`req.json()`, `express.json()`) before verification, the bytes
+`constructEvent` needs to compute the HMAC over no longer exist.
+
+**A malformed body is not a signature failure.** `constructEvent` verifies
+the signature and checks the timestamp tolerance before it ever calls
+`JSON.parse` on the body — but if the body isn't valid JSON (a corrupted
+delivery, a proxy that mangled it), `JSON.parse` throws a plain
+`SyntaxError`, not `InvalidWebhookSignatureError`. A catch-all that
+assumes "anything that isn't `WebhookTimestampToleranceError` must be a
+bad signature" silently misattributes this case — check for `SyntaxError`
+explicitly, as both examples above do. See [`errors.md`](./errors.md) for
+every error class the SDK throws.
 
 `constructEvent(rawBody, signatureHeader, secret, options?)` does three
 things in one call: verifies the HMAC-SHA256 signature (timing-safe
@@ -196,3 +254,51 @@ cursor }` → `{ data, nextCursor, hasMore }` shape as
 delivery automatically. `klap.webhooks.list()` itself (the webhooks, not
 their deliveries) stays unpaginated — capped at 20 active webhooks per
 organization.
+
+### None of the management methods are idempotent on a stale id
+
+`delete()` and `rotateSecret()`, called with a webhook id that's already
+been deleted, both throw a `KlapApiError` with `code: 'webhook_not_found'`
+and `status: 404` — the exact same error you'd get for an id that never
+existed at all. This is deliberate on the API side, not a bug: a deleted
+webhook is indistinguishable from a nonexistent one, so don't treat either
+call as a safe-to-repeat no-op — check `list()` first if you need to know
+whether a webhook is still there before acting on it.
+
+`retryDelivery(webhookId, deliveryId)` behaves slightly differently
+because it looks up two things: its webhook lookup *does* include deleted
+webhooks (so retrying a delivery that was recorded before the webhook was
+deleted still resolves the webhook itself), but it still 404s with
+`code: 'delivery_not_found'` if that specific `deliveryId` doesn't exist
+under it. Pass a `webhookId` that never existed at all, and you get
+`code: 'webhook_not_found'` instead — the two failure modes are
+distinguishable by `err.code`:
+
+```ts
+import { KlapApiError } from '@klappay/node'
+
+try {
+  await klap.webhooks.retryDelivery(webhookId, deliveryId)
+} catch (err) {
+  if (err instanceof KlapApiError && err.code === 'delivery_not_found') {
+    // webhookId is valid (even if since deleted); deliveryId isn't
+  } else if (err instanceof KlapApiError && err.code === 'webhook_not_found') {
+    // webhookId itself never existed
+  } else {
+    throw err
+  }
+}
+```
+
+See [`errors.md`](./errors.md) for `KlapApiError`'s full shape.
+
+### Scope errors look the same as not-found errors
+
+Every management method (`create`, `list`, `delete`, `rotateSecret`,
+`listDeliveries`/`listAllDeliveries`, `retryDelivery`) needs an API key
+carrying the appropriate write scope for webhooks. Calling one without it
+doesn't throw a distinct "forbidden" class — it raises the same
+`KlapApiError` as every other API-side rejection, just with a different
+`status`/`code` describing the permission failure. Branch on `err.code`
+(not on having caught *a* `KlapApiError` at all) if your handling needs to
+tell a scope problem apart from a not-found one.

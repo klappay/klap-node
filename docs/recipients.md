@@ -61,10 +61,37 @@ const recipients = await klap.recipients.list()
 await klap.recipients.revoke(recipient.id)
 ```
 
+`list()` returns `[]`, not an error, when the environment has no
+registered recipients yet — there's no separate "empty" signal to check
+for beyond the array's length.
+
 Revoking a recipient that's currently referenced by `payout: true` (see
 below) needs `recipients:manage_payout` instead of `recipients:write` —
 plain `recipients:write` can only revoke recipients that aren't also an
 API key's payout destination.
+
+`revoke()` is **not idempotent** — calling it on a recipient that's
+already revoked throws a `KlapApiError` with `code: 'recipient_not_found'`
+and `status: 404`, the same error (and deliberately indistinguishable
+from) revoking an id that never existed at all. Don't treat a second
+`revoke()` call as a safe no-op:
+
+```ts
+import { KlapApiError } from '@klappay/node'
+
+try {
+  await klap.recipients.revoke(recipient.id)
+} catch (err) {
+  if (err instanceof KlapApiError && err.code === 'recipient_not_found') {
+    // already revoked, or this id never existed — the API doesn't
+    // distinguish the two, so neither can you from this error alone
+  } else {
+    throw err
+  }
+}
+```
+
+See [`errors.md`](./errors.md) for `KlapApiError`'s full shape.
 
 ## `payout` — the link to an API key's own payout address
 
@@ -83,3 +110,22 @@ already gone through its own out-of-band approval (e.g. your dashboard's
 internal key), never a third-party integration key. Revoking a
 `payout: true` recipient takes effect immediately: any API key whose
 `payoutAddress` matches it stops authenticating on its very next request.
+
+Turning it back off is the same call with `false`:
+
+```ts
+await klap.recipients.setPayout(recipient.id, false)
+```
+
+**Setting `payout: true` does not unset it on any other recipient.**
+There's no single-payout-target invariant enforced here — multiple
+recipients can simultaneously hold `payout: true`, and calling
+`setPayout(id, true)` on a new one has no side effect on recipients
+already flagged. This is the most surprising part of the method: if your
+integration assumes "setting payout on this recipient" implicitly clears
+it elsewhere (the way, say, a single default payment method usually
+works), that assumption is wrong here — clear the old one yourself with
+an explicit `setPayout(oldId, false)` if that's the behavior you want.
+
+See [`errors.md`](./errors.md) for the error class these calls throw on
+failure.
