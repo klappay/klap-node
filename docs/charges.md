@@ -178,7 +178,10 @@ mid-request. There's no reason to abort `klap.charges.create()` itself
 (the charge already exists on the backend the moment that call resolves;
 aborting the SDK call doesn't undo it) or a webhook delivery (the abort
 is entirely local to your process, not something Klap's server would ever
-see).
+see). One asymmetry worth knowing: if the wait is currently on the live
+SSE-streaming path when you abort, the abort propagates immediately and
+rejects the wait — it does **not** fall back to polling first the way a
+dropped/failed stream otherwise would.
 
 ### `waitForSettlement(options?)`
 
@@ -209,6 +212,25 @@ const expired = await charge.waitFor('charge.expired')
 const underpaid = await charge.waitFor('charge.underpaid')
 const failed = await charge.waitFor('charge.settlement_failed')
 const overpaid = await charge.waitFor('charge.overpaid')
+```
+
+Since `waitFor()` never rejects with a state-specific typed error, timing
+out and reaching a different terminal state both surface the same way —
+catch `WaitTimeoutError` (from `@klappay/node`) if you want to tell "gave
+up waiting" apart from other failures in your own error handling:
+
+```ts
+import { WaitTimeoutError } from '@klappay/node'
+
+try {
+  const partiallyPaid = await charge.waitFor('charge.partially_paid', { timeoutMs: 30_000 })
+} catch (err) {
+  if (err instanceof WaitTimeoutError) {
+    console.log(`gave up after ${err.timeoutMs}ms waiting on ${err.chargeId}`)
+  } else {
+    throw err
+  }
+}
 ```
 
 `event` is any `TriggerableChargeEvent` (`@klappay/types`) — every charge
@@ -245,8 +267,21 @@ const page = await klap.charges.list({ status: 'confirmed', limit: 20 })
 // page.data, page.nextCursor, page.hasMore
 ```
 
-`list()` is one page (cursor-based, same as the REST API). `listAll()` is
-an async generator that pages through everything automatically:
+`list()` is one page (cursor-based, same as the REST API) — walk pages
+yourself by feeding `nextCursor` back in as `cursor` until `hasMore` is
+`false`:
+
+```ts
+let cursor: string | undefined
+do {
+  const page = await klap.charges.list({ status: 'confirmed', cursor })
+  for (const charge of page.data) console.log(charge.id)
+  cursor = page.nextCursor ?? undefined
+} while (cursor)
+```
+
+`listAll()` is an async generator that pages through everything
+automatically instead:
 
 ```ts
 for await (const charge of klap.charges.listAll({ status: 'confirmed' })) {
@@ -257,6 +292,19 @@ for await (const charge of klap.charges.listAll({ status: 'confirmed' })) {
 Each `charge` yielded by `listAll()` is the same live-wrapped object as
 `create()`/`get()` return — `waitForConfirmation()` etc. all work on it
 too.
+
+`listAll()`'s parameter is typed `ListChargesFilter`
+(`Partial<Omit<ListChargesInput, 'cursor'>>`) rather than
+`ListChargesInput` itself — `cursor` is deliberately excluded since
+`listAll()` manages pagination internally and always drives it itself.
+Combine as many filter fields as you need; they're passed through
+unchanged on every page it fetches:
+
+```ts
+for await (const charge of klap.charges.listAll({ status: 'confirmed', network: 'base' })) {
+  console.log(charge.id, charge.amount)
+}
+```
 
 ## `getTimeline(id)`
 
@@ -304,3 +352,32 @@ the stream (terminal state, expiry) or the given `signal` aborts. Most
 integrations want `waitForConfirmation()`/`waitForSettlement()`/
 `waitFor()` instead — they wrap this exact stream with a typed,
 Promise-based API and a polling fallback.
+
+## Raw SSE access
+
+`watch()` itself is built on `streamSSEEvents`, the SDK's lowest-level
+SSE primitive — exported directly if you want raw stream access instead
+of any of the higher-level polling/waiting helpers above (e.g. talking
+to an endpoint this SDK doesn't wrap yet, or handling event types
+`watch()` doesn't surface).
+
+```ts
+import { streamSSEEvents, type SSEEvent } from '@klappay/node'
+import type { Charge } from '@klappay/types'
+
+const controller = new AbortController()
+for await (const { event, data } of streamSSEEvents<Charge>(
+  { baseUrl: 'https://your-klap-api-host', apiKey: 'sk_...' },
+  '/v1/charges/ch_abc123/events',
+  controller.signal,
+)) {
+  console.log(event, data)
+}
+```
+
+`SSEEvent<T>` is just `{ event: string; data: T }` — the parsed
+`event: <name>` / `data: <json>` pair for one message on the stream,
+generic over whatever shape `data` decodes to. A comment-only heartbeat
+line (`: ping`, sent to keep the connection alive) has neither an
+`event:` nor a `data:` line, so it's silently skipped rather than
+yielded as an empty event.
