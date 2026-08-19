@@ -2,7 +2,11 @@
 
 The SDK throws, it doesn't return `{ ok, error }` unions — use
 `try`/`catch`, and check the error's class (or `instanceof`) to decide
-what happened.
+what happened. None of the classes below share a common SDK base error —
+each extends `Error` directly — so there's no single SDK type to `catch`
+that covers all of them; check `instanceof` against the specific classes
+you care about, falling back to `instanceof KlapApiError` for the whole
+family of API-side errors, or `instanceof Error` as the final catch-all.
 
 ## `KlapApiError`
 
@@ -70,6 +74,29 @@ try {
 Thrown by `klap.webhooks.constructEvent()` when the signature doesn't
 match. See [`webhooks.md`](./webhooks.md).
 
+```ts
+import { InvalidWebhookSignatureError } from '@klappay/node'
+
+try {
+  const event = klap.webhooks.constructEvent(
+    req.rawBody,
+    req.headers['x-klappay-signature'],
+    process.env.KLAP_WEBHOOK_SECRET,
+  )
+  // ... handle event
+} catch (err) {
+  if (err instanceof InvalidWebhookSignatureError) {
+    res.sendStatus(400)
+    return
+  }
+  throw err
+}
+```
+
+See [`webhooks.md`](./webhooks.md#verifying-and-parsing-an-inbound-webhook)
+for the full handler, including `WebhookTimestampToleranceError` and the
+malformed-body case alongside it.
+
 ## `WebhookTimestampToleranceError`
 
 Thrown by `klap.webhooks.constructEvent()` when the signature is valid
@@ -83,4 +110,22 @@ replay protection".
 
 Thrown immediately, client-side, when you call a method that needs an
 `apiKey` you didn't provide to `createClient()` — pass it there, or call
-`klap.setApiKey()` first.
+`klap.setApiKey()` first. No request ever reaches the API in this case.
+
+```ts
+import { createClient, MissingCredentialError } from '@klappay/node'
+
+const klap = createClient({ baseUrl: 'https://your-klap-api-host' })
+
+try {
+  await klap.charges.create({
+    amount: 10,
+    acceptedPayments: [{ token: 'USDC', network: 'base' }],
+    expiresIn: 3600,
+  })
+} catch (err) {
+  if (err instanceof MissingCredentialError) {
+    console.log(err.message) // "charges.create() requires an apiKey — ..."
+  }
+}
+```
