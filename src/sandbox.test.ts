@@ -20,6 +20,7 @@ const FAKE_CHARGE: Charge = {
   currency: 'USD',
   acceptedPayments: [{ token: 'USDC', network: 'base' }],
   paidWith: [],
+  swapAlternatives: [],
   address: '0xabc',
   status: 'pending',
   settlementStatus: null,
