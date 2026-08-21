@@ -1,4 +1,4 @@
-import type { Charge, TimelineEvent } from '@klappay/types'
+import type { Charge, SwapQuote, TimelineEvent } from '@klappay/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createChargesClient } from './charges'
 
@@ -23,6 +23,7 @@ const FAKE_CHARGE: Charge = {
   currency: 'USD',
   acceptedPayments: [{ token: 'USDC', network: 'base' }],
   paidWith: [],
+  swapAlternatives: [],
   address: '0xabc',
   status: 'pending',
   settlementStatus: null,
@@ -236,6 +237,44 @@ describe('createChargesClient().getQrCode()', () => {
     await createChargesClient(config).getQrCode('ch_fake', { token: 'USDC', network: 'base' })
 
     expect(requestMock.mock.calls[0]?.[1].query).toEqual({ token: 'USDC', network: 'base' })
+  })
+})
+
+describe('createChargesClient().getQuote()', () => {
+  const FAKE_QUOTE: SwapQuote = {
+    inputToken: 'ETH',
+    inputNetwork: 'base',
+    inputAmount: 0.005,
+    outputToken: 'USDC',
+    outputNetwork: 'base',
+    outputAmount: 10,
+    fees: { klappayFee: 0.1, zeroExFee: null },
+    expiresAt: '2026-01-01T00:00:30.000Z',
+    transaction: { to: '0xdef', data: '0x', value: '0' },
+  }
+
+  beforeEach(() => {
+    requestMock.mockReset()
+    requestMock.mockResolvedValue(FAKE_QUOTE)
+  })
+
+  it('posts inputToken/inputNetwork/takerAddress to the quote endpoint', async () => {
+    const result = await createChargesClient(config).getQuote('ch_fake', {
+      inputToken: 'ETH',
+      inputNetwork: 'base',
+      takerAddress: '0x1111111111111111111111111111111111111111',
+    })
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'POST',
+      path: '/v1/charges/ch_fake/quote',
+      body: {
+        inputToken: 'ETH',
+        inputNetwork: 'base',
+        takerAddress: '0x1111111111111111111111111111111111111111',
+      },
+    })
+    expect(result).toEqual(FAKE_QUOTE)
   })
 })
 

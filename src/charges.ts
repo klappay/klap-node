@@ -2,10 +2,12 @@ import { randomBytes } from 'node:crypto'
 import {
   type Charge,
   type CreateChargeRequest,
+  type CreateSwapQuoteInput,
   type GetChargeQrCodeQueryRequest,
   type ListChargesInput,
   PAGINATION_LIMIT_DEFAULT,
   PAGINATION_LIMIT_MAX,
+  type SwapQuote,
   type TimelineEvent,
 } from '@klappay/types'
 import { type KlapCharge, wrapCharge } from './charges-wait'
@@ -59,6 +61,20 @@ export function createChargesClient(passedConfig: HttpConfig = {}) {
         path: `/v1/charges/${encodeURIComponent(id)}/qrcode`,
         query,
         responseType: 'text',
+      })
+    },
+
+    /**
+     * Quotes a swap (via 0x) from a non-stablecoin cryptocurrency the payer
+     * holds into one of the charge's `acceptedPayments` tokens — see
+     * `charge.swapAlternatives` for which `(inputToken, inputNetwork)`
+     * pairs are trusted. Requires `charges:write`.
+     */
+    async getQuote(id: string, input: CreateSwapQuoteInput): Promise<SwapQuote> {
+      return request<SwapQuote>(config, {
+        method: 'POST',
+        path: `/v1/charges/${encodeURIComponent(id)}/quote`,
+        body: input,
       })
     },
 

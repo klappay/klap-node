@@ -91,6 +91,11 @@ your environment right now? See [`networks.md`](./networks.md) —
 picker from it instead of hardcoding the pairs client-side, since it
 changes as new networks/tokens come online.
 
+`charge.swapAlternatives` is a separate list — cryptocurrencies the
+payer can pay with *instead*, swapped into an accepted pair under the
+hood via [`getQuote()`](#getquote-id-input) below, not something you
+configure on `create()`.
+
 `amount` and `expiresIn` are both required — every charge has a target
 amount and a fixed deadline; there's no default to fall back on. `expiresIn`
 is capped at 3600 seconds (60 minutes), sized off the slowest chain Klap
@@ -348,6 +353,53 @@ than one pair — with exactly one, it's resolved automatically:
 ```ts
 const svg = await klap.charges.getQrCode('ch_abc123', { token: 'USDC', network: 'base' })
 ```
+
+## `getQuote(id, input)`
+
+Quotes a swap-to-pay: the payer settles the charge with a different
+cryptocurrency than any of its `acceptedPayments`, swapped (via 0x)
+into one of them under the hood. `charge.swapAlternatives` lists which
+`(token, network)` pairs are trusted as swap input for a given charge —
+pass one straight through as `inputToken`/`inputNetwork`, alongside the
+payer's own wallet address:
+
+```ts
+const quote = await klap.charges.getQuote('ch_abc123', {
+  inputToken: 'ETH',
+  inputNetwork: 'base',
+  takerAddress: '0x1111111111111111111111111111111111111111',
+})
+```
+
+The swap's output is delivered straight to the charge's own `address`,
+so once the payer signs and submits `quote.transaction`, the resulting
+USDC/USDT is detected and credited exactly like any other transfer —
+Klap never sees or custodies the input cryptocurrency, and the merchant
+always receives the charge's full remaining amount (`quote.outputAmount`)
+regardless of what the payer sent. Klap charges the payer a separate fee
+on top (`quote.fees.klappayFee`, plus 0x's own `quote.fees.zeroExFee`
+when it applies) — neither ever reduces `outputAmount`.
+
+**Two client-side flows depending on `inputToken`**: a network's own
+native currency (`ETH`/`BNB`/`MATIC`/`AVAX`) needs no extra step — sign
+and send `quote.transaction` directly. An ERC-20 input (today, only
+`BTC`) additionally returns `quote.permit2` — sign that EIP-712 message
+first and append the signature to `quote.transaction.data` before
+sending.
+
+`quote.expiresAt` is a rough guide for a UI countdown only — the actual
+price is enforced on-chain by the swap transaction itself, not by this
+timestamp. Requires the `charges:write` scope (not just `charges:read`),
+since each call is a real, billable request against Klap's own 0x
+account — rate-limited per charge on top of the general per-key rate
+limit (`429 rate_limited`).
+
+Not available for `test`-environment charges — 0x has no testnet
+support, so this always rejects with `422
+swap_test_environment_unsupported` (`charge.swapAlternatives` is
+correspondingly always empty on a test charge). See `@klappay/types`'
+`CreateSwapQuoteSchema`/`SwapQuoteSchema` for every field's full
+documentation.
 
 ## `watch(id, signal?)`
 
