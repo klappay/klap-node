@@ -1,5 +1,11 @@
 # @klappay/node
 
+## 3.2.2
+
+### Patch Changes
+
+- 1f69f7c: Bump `@klappay/types` to 3.1.1 (fixes `SwapQuoteSchema.permit2` rejecting `null` for a native-currency swap quote).
+
 ## 3.2.1
 
 ### Patch Changes
