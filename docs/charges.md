@@ -401,6 +401,37 @@ correspondingly always empty on a test charge). See `@klappay/types`'
 `CreateSwapQuoteSchema`/`SwapQuoteSchema` for every field's full
 documentation.
 
+## `check(id, input?)`
+
+Triggers an immediate on-chain re-check of a charge instead of waiting
+for the background reconciliation pass, which otherwise catches a
+missed webhook within roughly a minute as a backstop:
+
+```ts
+const charge = await klap.charges.check('ch_abc123')
+```
+
+Never trusts the caller — it re-runs the same independent on-chain
+lookup the reconciliation job and webhook ingestion already use, and
+only changes the charge's state if a real matching transfer is found.
+If you already have a transaction hash (e.g. right after a swap-to-pay
+or wallet-connect transaction is sent), pass it with `network` to
+verify that specific transaction directly — one RPC call instead of a
+block-range scan, so it resolves faster and cheaper:
+
+```ts
+const charge = await klap.charges.check('ch_abc123', {
+  txHash: '0x1234567890123456789012345678901234567890123456789012345678901234',
+  network: 'base',
+})
+```
+
+`txHash` and `network` must be provided together, or both omitted.
+Rate-limited to once every 10 seconds per charge, shared across every
+caller — prefer [`watch()`](#watchid-signal) to observe the result
+instead of polling this repeatedly. See `@klappay/types`'
+`CheckChargeRequestSchema` for the full field documentation.
+
 ## `watch(id, signal?)`
 
 ```ts

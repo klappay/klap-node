@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import {
   type Charge,
+  type CheckChargeRequest,
   type CreateChargeRequest,
   type CreateSwapQuoteInput,
   type GetChargeQrCodeQueryRequest,
@@ -76,6 +77,24 @@ export function createChargesClient(passedConfig: HttpConfig = {}) {
         path: `/v1/charges/${encodeURIComponent(id)}/quote`,
         body: input,
       })
+    },
+
+    /**
+     * Triggers an immediate on-chain re-check of this charge instead of
+     * waiting for the ~60s background reconciliation pass. Pass
+     * `txHash`/`network` (e.g. right after a swap-to-pay or
+     * wallet-connect transaction is sent) to verify that specific
+     * transaction directly — one RPC call instead of a block-range scan.
+     * Never trusts the caller: the charge only changes state if a real
+     * matching transfer is found on-chain. Rate-limited per charge.
+     */
+    async check(id: string, input?: CheckChargeRequest): Promise<KlapCharge> {
+      const charge = await request<Charge>(config, {
+        method: 'POST',
+        path: `/v1/charges/${encodeURIComponent(id)}/check`,
+        body: input,
+      })
+      return wrapCharge(config, charge)
     },
 
     list,

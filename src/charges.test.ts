@@ -278,6 +278,38 @@ describe('createChargesClient().getQuote()', () => {
   })
 })
 
+describe('createChargesClient().check()', () => {
+  beforeEach(() => {
+    requestMock.mockReset()
+    requestMock.mockResolvedValue(FAKE_CHARGE)
+  })
+
+  it('posts to the check endpoint with no body when called with no txHash/network', async () => {
+    const result = await createChargesClient(config).check('ch_fake')
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'POST',
+      path: '/v1/charges/ch_fake/check',
+      body: undefined,
+    })
+    expect(result).toMatchObject(FAKE_CHARGE)
+    expect(result.refresh).toBeInstanceOf(Function)
+  })
+
+  it('posts txHash/network through when checking a specific transaction', async () => {
+    await createChargesClient(config).check('ch_fake', {
+      txHash: `0x${'1'.repeat(64)}`,
+      network: 'base',
+    })
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'POST',
+      path: '/v1/charges/ch_fake/check',
+      body: { txHash: `0x${'1'.repeat(64)}`, network: 'base' },
+    })
+  })
+})
+
 describe('createChargesClient().watch()', () => {
   beforeEach(() => {
     streamMock.mockReset()
