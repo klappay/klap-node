@@ -78,6 +78,18 @@ so reading a charge back tells you where the money actually went without
 a second lookup. See [`recipients.md`](./recipients.md) for registering
 recipients and the full request/response shape split.
 
+### `escrow`
+
+`CreateChargeSchema`/`ChargeSchema` carry an `escrow` field —
+configuring a charge as an escrow instead of a normal payment, released
+only by a signature from `escrow.releaserAddress` (see
+[`release(id, input)`](#release-id-input) below). **Not usable yet**:
+klap-core currently rejects any `create()` request carrying `escrow`
+with `503 escrow_unavailable` — passing it today will fail. This is
+independent of `release()` already being live, which exists so
+integrators aren't blocked on both landing at once; this note will come
+out once `create()` accepts `escrow` too.
+
 `acceptedPayments` lets the payer choose which rail to actually use — at
 least one `(token, network)` pair, up to 14. Every transfer on an
 accepted pair is credited and sums toward the charge total —
@@ -432,6 +444,30 @@ Rate-limited to once every 10 seconds per charge, shared across every
 caller — prefer [`watch()`](#watch-id-signal) to observe the result
 instead of polling this repeatedly. See `@klappay/types`'
 `CheckChargeRequestSchema` for the full field documentation.
+
+## `release(id, input)`
+
+Releases an escrow-configured charge's entire live token balance from
+its dedicated Safe to the charge's split address, where the normal
+distribution mechanism then pays out the merchant/platform shares
+exactly as it would for a non-escrow charge:
+
+```ts
+const charge = await klap.charges.release('ch_abc123', {
+  signature: '0x2d0fbf1dba287883a4b6c5aeef9da7653dc68b3e20417d42e87db700ad9e878...',
+})
+```
+
+`signature` must be a valid Safe transaction signature from this
+charge's `escrowReleaserAddress` (see [`escrow`](#escrow) above),
+authorizing a transfer of the escrow's full live balance — the amount
+actually received, not whatever was fixed at creation, since it can
+vary with under/overpayment. Verified on-chain by the Safe contract
+itself before anything moves, never taken on faith by Klappay. Can only
+be called once per charge — a second call rejects with `409
+escrow_already_released`. Requires `charges:write`. Fires
+`charge.escrow_released` once the release completes on-chain — see
+[`webhooks.md`](./webhooks.md).
 
 ## `watch(id, signal?)`
 

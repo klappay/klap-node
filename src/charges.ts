@@ -8,6 +8,7 @@ import {
   type ListChargesInput,
   PAGINATION_LIMIT_DEFAULT,
   PAGINATION_LIMIT_MAX,
+  type ReleaseEscrowRequest,
   type SwapQuote,
   type TimelineEvent,
 } from '@klappay/types'
@@ -92,6 +93,24 @@ export function createChargesClient(passedConfig: HttpConfig = {}) {
       const charge = await request<Charge>(config, {
         method: 'POST',
         path: `/v1/charges/${encodeURIComponent(id)}/check`,
+        body: input,
+      })
+      return wrapCharge(config, charge)
+    },
+
+    /**
+     * Releases an escrow-configured charge's entire live token balance
+     * from its Safe to the charge's split address, where the normal
+     * distribution mechanism then pays out the merchant/platform shares.
+     * `signature` must be a valid Safe transaction signature from this
+     * charge's `escrowReleaserAddress`, verified on-chain by the Safe
+     * contract itself. Can only be called once per charge. Requires
+     * `charges:write`.
+     */
+    async release(id: string, input: ReleaseEscrowRequest): Promise<KlapCharge> {
+      const charge = await request<Charge>(config, {
+        method: 'POST',
+        path: `/v1/charges/${encodeURIComponent(id)}/release`,
         body: input,
       })
       return wrapCharge(config, charge)

@@ -26,5 +26,7 @@ export function createSandboxClient(passedConfig: HttpConfig = {}) {
     settle: (chargeId: string): Promise<Charge> => trigger(chargeId, 'charge.settled'),
     failSettlement: (chargeId: string): Promise<Charge> =>
       trigger(chargeId, 'charge.settlement_failed'),
+    releaseEscrow: (chargeId: string): Promise<Charge> =>
+      trigger(chargeId, 'charge.escrow_released'),
   }
 }

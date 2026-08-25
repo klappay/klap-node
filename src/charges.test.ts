@@ -311,6 +311,26 @@ describe('createChargesClient().check()', () => {
   })
 })
 
+describe('createChargesClient().release()', () => {
+  beforeEach(() => {
+    requestMock.mockReset()
+    requestMock.mockResolvedValue(FAKE_CHARGE)
+  })
+
+  it('posts the signature to the release endpoint and wraps the result', async () => {
+    const signature = `0x${'1'.repeat(130)}`
+    const result = await createChargesClient(config).release('ch_fake', { signature })
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'POST',
+      path: '/v1/charges/ch_fake/release',
+      body: { signature },
+    })
+    expect(result).toMatchObject(FAKE_CHARGE)
+    expect(result.refresh).toBeInstanceOf(Function)
+  })
+})
+
 describe('createChargesClient().watch()', () => {
   beforeEach(() => {
     streamMock.mockReset()

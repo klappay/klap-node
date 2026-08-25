@@ -45,6 +45,7 @@ convenience method for the most common case; the others cover the rest:
 | `klap.sandbox.underpay(chargeId)` | `charge.underpaid` — expired after a partial payment (trigger `partiallyPay` first) |
 | `klap.sandbox.settle(chargeId)` | `charge.settled` — payout completed |
 | `klap.sandbox.failSettlement(chargeId)` | `charge.settlement_failed` — payout failed |
+| `klap.sandbox.releaseEscrow(chargeId)` | `charge.escrow_released` — escrow funds released to the split address |
 | `klap.sandbox.trigger(chargeId, event, amount?)` | Any of the above, by event name — what the others call internally |
 
 None of these ever touch the blockchain — `settle()`/`failSettlement()`
