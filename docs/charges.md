@@ -134,7 +134,9 @@ one for you automatically. That makes every `create()` call safe to retry
 after a network failure or timeout — a retried request with the same key
 returns the original charge unchanged instead of creating a duplicate.
 Pass your own `idempotencyKey` explicitly if you want to control it
-yourself (e.g. deriving it from your own order id).
+yourself (e.g. deriving it from your own order id). Reusing a key with a
+*different* request body, instead of a true retry, gets rejected with
+`409 idempotency_key_reused`.
 
 ## `get(id)`
 
