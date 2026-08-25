@@ -224,7 +224,7 @@ if the timeout elapses first.
 
 `waitForConfirmation`/`waitForSettlement` cover the two most common
 questions — did the payer pay, did the merchant get paid. `waitFor()` is
-the general form, for the other five events:
+the general form, for the other six events:
 
 ```ts
 const partiallyPaid = await charge.waitFor('charge.partially_paid')
@@ -232,6 +232,7 @@ const expired = await charge.waitFor('charge.expired')
 const underpaid = await charge.waitFor('charge.underpaid')
 const failed = await charge.waitFor('charge.settlement_failed')
 const overpaid = await charge.waitFor('charge.overpaid')
+const released = await charge.waitFor('charge.escrow_released')
 ```
 
 Since `waitFor()` never rejects with a state-specific typed error, timing

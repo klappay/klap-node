@@ -38,6 +38,7 @@ const FAKE_CHARGE: Charge = {
   confirmedAt: null,
   settledAt: null,
   lastActivityAt: '2026-01-01T00:00:00.000Z',
+  escrow: null,
 }
 
 beforeEach(() => {
