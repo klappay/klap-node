@@ -85,6 +85,19 @@ configuring a charge as an escrow instead of a normal payment, released
 only by a signature from `escrow.releaserAddress` (see
 [`release(id, input)`](#release-id-input) below).
 
+```ts
+const charge = await klap.charges.create({
+  amount: 49.9,
+  acceptedPayments: [{ token: 'USDC', network: 'base' }],
+  expiresIn: 3600,
+  escrow: { releaserAddress: '0xabc1234567890123456789012345678901234567' },
+})
+```
+
+Everything else about `create()` — `acceptedPayments`, `expiresIn`,
+`metadata`, `splitRecipients` — works exactly the same on an escrow
+charge; `escrow` only changes how the funds are released once paid.
+
 `acceptedPayments` lets the payer choose which rail to actually use — at
 least one `(token, network)` pair, up to 14. Every transfer on an
 accepted pair is credited and sums toward the charge total —
