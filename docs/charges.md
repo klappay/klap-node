@@ -428,7 +428,7 @@ const charge = await klap.charges.check('ch_abc123', {
 
 `txHash` and `network` must be provided together, or both omitted.
 Rate-limited to once every 10 seconds per charge, shared across every
-caller — prefer [`watch()`](#watchid-signal) to observe the result
+caller — prefer [`watch()`](#watch-id-signal) to observe the result
 instead of polling this repeatedly. See `@klappay/types`'
 `CheckChargeRequestSchema` for the full field documentation.
 
