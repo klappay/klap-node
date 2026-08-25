@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@klappay/types':
-        specifier: ^3.5.0
-        version: 3.5.0
+        specifier: ^3.5.1
+        version: 3.5.1
     devDependencies:
       '@biomejs/biome':
         specifier: ^1.9.0
@@ -857,8 +857,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@klappay/types@3.5.0':
-    resolution: {integrity: sha512-MryAI7gBEYQl3YuAepiBPHe0OhWh+PIyenwPN47QOeYM61c3i8EwY5BFapkp23KYrGqMtetytjAsUWpQ19vXYQ==}
+  '@klappay/types@3.5.1':
+    resolution: {integrity: sha512-8BAmKK+NxseDHHteKgpaZMmDFfMyCvpbbmTOUaF4Fh07JL4p7CkyvXpH3n/hXf88rBo/InpKSi3qUHUxBYlw/g==}
     engines: {node: '>=24'}
 
   '@manypkg/find-root@1.1.0':
@@ -3517,7 +3517,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@klappay/types@3.5.0':
+  '@klappay/types@3.5.1':
     dependencies:
       zod: 3.25.76
 

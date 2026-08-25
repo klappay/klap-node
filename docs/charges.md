@@ -83,12 +83,7 @@ recipients and the full request/response shape split.
 `CreateChargeSchema`/`ChargeSchema` carry an `escrow` field —
 configuring a charge as an escrow instead of a normal payment, released
 only by a signature from `escrow.releaserAddress` (see
-[`release(id, input)`](#release-id-input) below). **Not usable yet**:
-klap-core currently rejects any `create()` request carrying `escrow`
-with `503 escrow_unavailable` — passing it today will fail. This is
-independent of `release()` already being live, which exists so
-integrators aren't blocked on both landing at once; this note will come
-out once `create()` accepts `escrow` too.
+[`release(id, input)`](#release-id-input) below).
 
 `acceptedPayments` lets the payer choose which rail to actually use — at
 least one `(token, network)` pair, up to 14. Every transfer on an

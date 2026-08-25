@@ -79,7 +79,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@klappay/types": "^3.5.0"
+    "@klappay/types": "^3.5.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
