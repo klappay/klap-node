@@ -309,6 +309,17 @@ describe('createChargesClient().check()', () => {
       body: { txHash: `0x${'1'.repeat(64)}`, network: 'base' },
     })
   })
+
+  it('surfaces transactionSender from the response', async () => {
+    requestMock.mockResolvedValue({ ...FAKE_CHARGE, transactionSender: '0xsender' })
+
+    const result = await createChargesClient(config).check('ch_fake', {
+      txHash: `0x${'1'.repeat(64)}`,
+      network: 'base',
+    })
+
+    expect(result.transactionSender).toBe('0xsender')
+  })
 })
 
 describe('createChargesClient().release()', () => {

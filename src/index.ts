@@ -3,7 +3,7 @@ export type { CreateClientOptions, KlapClient } from './client'
 
 export { createChargesClient } from './charges'
 export type { ListChargesFilter } from './charges'
-export type { KlapCharge, WaitOptions } from './charges-wait'
+export type { CheckedCharge, KlapCharge, WaitOptions } from './charges-wait'
 
 export { createWebhooksClient, verifyWebhookSignature, constructWebhookEvent } from './webhooks'
 

@@ -455,6 +455,13 @@ caller — prefer [`watch()`](#watch-id-signal) to observe the result
 instead of polling this repeatedly. See `@klappay/types`'
 `CheckChargeRequestSchema` for the full field documentation.
 
+The result also carries `transactionSender` — the checked
+transaction's own signer, which stays the payer's real wallet even
+when the payment routed through a swap/aggregator on the way in,
+unlike the credited transfer's own sender (which can be a router/pool
+contract). Only populated when `txHash`/`network` was passed and a
+matching receipt was found; `null` otherwise.
+
 ## `release(id, input)`
 
 Releases an escrow-configured charge's entire live token balance from

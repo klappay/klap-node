@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto'
 import {
   type Charge,
   type CheckChargeRequest,
+  type CheckChargeResponse,
   type CreateChargeRequest,
   type CreateSwapQuoteInput,
   type GetChargeQrCodeQueryRequest,
@@ -12,11 +13,11 @@ import {
   type SwapQuote,
   type TimelineEvent,
 } from '@klappay/types'
-import { type KlapCharge, wrapCharge } from './charges-wait'
+import { type CheckedCharge, type KlapCharge, wrapCharge } from './charges-wait'
 import { type HttpConfig, request, withApiKeyEnvFallback } from './http'
 import { streamChargeEvents } from './sse'
 
-export type { KlapCharge, WaitOptions } from './charges-wait'
+export type { CheckedCharge, KlapCharge, WaitOptions } from './charges-wait'
 
 function generateIdempotencyKey(): string {
   return `sdk_${Date.now()}_${randomBytes(8).toString('hex')}`
@@ -88,9 +89,17 @@ export function createChargesClient(passedConfig: HttpConfig = {}) {
      * transaction directly — one RPC call instead of a block-range scan.
      * Never trusts the caller: the charge only changes state if a real
      * matching transfer is found on-chain. Rate-limited per charge.
+     *
+     * The result also carries `transactionSender` — the checked
+     * transaction's own signer, which stays the payer's real wallet even
+     * when the payment routed through a swap/aggregator. Only populated
+     * when `txHash`/`network` was passed and a matching receipt was found.
      */
-    async check(id: string, input?: CheckChargeRequest): Promise<KlapCharge> {
-      const charge = await request<Charge>(config, {
+    async check(
+      id: string,
+      input?: CheckChargeRequest,
+    ): Promise<CheckedCharge<CheckChargeResponse>> {
+      const charge = await request<CheckChargeResponse>(config, {
         method: 'POST',
         path: `/v1/charges/${encodeURIComponent(id)}/check`,
         body: input,

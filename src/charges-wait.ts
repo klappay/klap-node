@@ -28,6 +28,8 @@ export type KlapCharge = Charge & {
   waitFor(event: TriggerableChargeEvent, options?: WaitOptions): Promise<KlapCharge>
 }
 
+export type CheckedCharge<T extends Charge = Charge> = T & Omit<KlapCharge, keyof Charge>
+
 type WaitCheckResult = { done: true; result: Charge } | { done: false }
 
 const EVENT_CHECKS: Record<TriggerableChargeEvent, (charge: Charge) => WaitCheckResult> = {
@@ -158,7 +160,7 @@ async function waitViaPolling(
   }
 }
 
-export function wrapCharge(config: HttpConfig, charge: Charge): KlapCharge {
+export function wrapCharge<T extends Charge>(config: HttpConfig, charge: T): CheckedCharge<T> {
   return {
     ...charge,
     async refresh() {
