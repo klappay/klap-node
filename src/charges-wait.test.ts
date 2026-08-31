@@ -264,10 +264,6 @@ describe('waitFor() via polling (no apiKey configured)', () => {
     ['charge.settled', { settlementStatus: 'completed' }],
     ['charge.settlement_failed', { settlementStatus: 'failed' }],
     ['charge.overpaid', { isOverpaid: true }],
-    [
-      'charge.escrow_released',
-      { escrow: { releaserAddress: '0xabc', releasedAt: '2026-01-01T00:00:00.000Z' } },
-    ],
   ] as [TriggerableChargeEvent, Partial<Charge>][])(
     'resolves for %s once the matching field changes',
     async (event, patch) => {

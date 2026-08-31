@@ -45,7 +45,6 @@ convenience method for the most common case; the others cover the rest:
 | `klap.sandbox.underpay(chargeId)` | `charge.underpaid` — expired after a partial payment (trigger `partiallyPay` first) |
 | `klap.sandbox.settle(chargeId)` | `charge.settled` — payout completed |
 | `klap.sandbox.failSettlement(chargeId)` | `charge.settlement_failed` — payout failed |
-| `klap.sandbox.releaseEscrow(chargeId)` | `charge.escrow_released` — escrow funds released to the split address |
 | `klap.sandbox.trigger(chargeId, event, amount?)` | Any of the above, by event name — what the others call internally |
 
 None of these ever touch the blockchain — `settle()`/`failSettlement()`
@@ -58,7 +57,12 @@ standalone state — it always fires alongside `charge.confirmed`, same as
 a real overpayment detected on-chain. This is the only sandbox trigger
 endpoint — webhook-delivery-health events (`webhook.delivery_failed`,
 etc.) are derived from real delivery attempts and have no simulated
-trigger of their own.
+trigger of their own. The two escrow-terminal events,
+`charge.escrow_released`/`charge.escrow_refunded`, have no trigger
+either — reach them by calling
+[`klap.charges.release()`/`klap.charges.refund()`](./charges.md#release-id-input)
+directly on a `test`-environment escrow charge, a real Safe transaction
+on that network's testnet.
 
 ```ts
 await klap.sandbox.overpay(charge.id, 15)

@@ -44,8 +44,8 @@ on-chain; `settled` means the merchant's wallet actually received it —
 a separate, later step. Subscribe to `confirmed` if you only need "will
 I get paid," or `settled` if you need "has the money actually arrived."
 See the full event list in `@klappay/types`' `ChargeWebhookEventTypeSchema`
-(8 charge events) and `WebhookDeliveryEventTypeSchema` (3 delivery-health
-events) — 11 events total.
+(10 charge events) and `WebhookDeliveryEventTypeSchema` (3 delivery-health
+events) — 13 events total.
 
 ### Environment scoping
 

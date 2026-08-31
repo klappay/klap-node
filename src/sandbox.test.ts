@@ -66,7 +66,6 @@ describe('createSandboxClient() convenience methods', () => {
     ['underpay', 'charge.underpaid'],
     ['settle', 'charge.settled'],
     ['failSettlement', 'charge.settlement_failed'],
-    ['releaseEscrow', 'charge.escrow_released'],
   ] as const)('%s() triggers %s with no amount', async (method, event) => {
     // biome-ignore lint/suspicious/noExplicitAny: exercising every convenience method generically
     const result = await (createSandboxClient(config)[method] as any)('ch_1')

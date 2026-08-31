@@ -9,6 +9,7 @@ import {
   type ListChargesInput,
   PAGINATION_LIMIT_DEFAULT,
   PAGINATION_LIMIT_MAX,
+  type RefundEscrowRequest,
   type ReleaseEscrowRequest,
   type SwapQuote,
   type TimelineEvent,
@@ -120,6 +121,24 @@ export function createChargesClient(passedConfig: HttpConfig = {}) {
       const charge = await request<Charge>(config, {
         method: 'POST',
         path: `/v1/charges/${encodeURIComponent(id)}/release`,
+        body: input,
+      })
+      return wrapCharge(config, charge)
+    },
+
+    /**
+     * Refunds an escrow-configured charge's entire live token balance from
+     * its Safe back to the address that funded it, instead of the split
+     * address — no distribution follows. `signature` must be a valid Safe
+     * transaction signature from this charge's `escrowReleaserAddress`,
+     * verified on-chain by the Safe contract itself. Mutually exclusive
+     * with `release()` — an escrow can only ever be released or refunded
+     * once, never both. Requires `charges:write`.
+     */
+    async refund(id: string, input: RefundEscrowRequest): Promise<KlapCharge> {
+      const charge = await request<Charge>(config, {
+        method: 'POST',
+        path: `/v1/charges/${encodeURIComponent(id)}/refund`,
         body: input,
       })
       return wrapCharge(config, charge)

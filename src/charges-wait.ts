@@ -45,8 +45,6 @@ const EVENT_CHECKS: Record<TriggerableChargeEvent, (charge: Charge) => WaitCheck
   'charge.settlement_failed': (c) =>
     c.settlementStatus === 'failed' ? { done: true, result: c } : { done: false },
   'charge.overpaid': (c) => (c.isOverpaid ? { done: true, result: c } : { done: false }),
-  'charge.escrow_released': (c) =>
-    c.escrow?.releasedAt != null ? { done: true, result: c } : { done: false },
 }
 
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {

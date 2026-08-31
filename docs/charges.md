@@ -81,9 +81,11 @@ recipients and the full request/response shape split.
 ### `escrow`
 
 `CreateChargeSchema`/`ChargeSchema` carry an `escrow` field —
-configuring a charge as an escrow instead of a normal payment, released
-only by a signature from `escrow.releaserAddress` (see
-[`release(id, input)`](#release-id-input) below).
+configuring a charge as an escrow instead of a normal payment, moved out
+only by a signature from `escrow.releaserAddress`, either to the split
+address ([`release(id, input)`](#release-id-input)) or back to the payer
+([`refund(id, input)`](#refund-id-input)) — mutually exclusive, an
+escrow charge only ever goes one way.
 
 ```ts
 const charge = await klap.charges.create({
@@ -246,7 +248,7 @@ if the timeout elapses first.
 
 `waitForConfirmation`/`waitForSettlement` cover the two most common
 questions — did the payer pay, did the merchant get paid. `waitFor()` is
-the general form, for the other six events:
+the general form, for the other five events:
 
 ```ts
 const partiallyPaid = await charge.waitFor('charge.partially_paid')
@@ -254,7 +256,6 @@ const expired = await charge.waitFor('charge.expired')
 const underpaid = await charge.waitFor('charge.underpaid')
 const failed = await charge.waitFor('charge.settlement_failed')
 const overpaid = await charge.waitFor('charge.overpaid')
-const released = await charge.waitFor('charge.escrow_released')
 ```
 
 Since `waitFor()` never rejects with a state-specific typed error, timing
@@ -278,7 +279,11 @@ try {
 
 `event` is any `TriggerableChargeEvent` (`@klappay/types`) — every charge
 `WebhookEventType` except `charge.created` (a charge already exists by
-the time you have an id to trigger against). Same underlying engine as
+the time you have an id to trigger against) and the two escrow-terminal
+events, `charge.escrow_released`/`charge.escrow_refunded` (reached by
+calling [`release()`](#release-id-input)/[`refund()`](#refund-id-input)
+directly, whose response already reflects the terminal state — no need
+to wait for it separately). Same underlying engine as
 `waitForConfirmation`/`waitForSettlement` (SSE-first, polling fallback,
 same `WaitOptions`), but simpler on purpose: it only resolves on the
 specific event you asked for, and never rejects with a typed error for a
@@ -482,9 +487,33 @@ actually received, not whatever was fixed at creation, since it can
 vary with under/overpayment. Verified on-chain by the Safe contract
 itself before anything moves, never taken on faith by Klappay. Can only
 be called once per charge — a second call rejects with `409
-escrow_already_released`. Requires `charges:write`. Fires
-`charge.escrow_released` once the release completes on-chain — see
-[`webhooks.md`](./webhooks.md).
+escrow_already_released` (or `409 escrow_already_refunded` if
+[`refund()`](#refund-id-input) got there first — the two are mutually
+exclusive). Requires `charges:write`. Fires `charge.escrow_released`
+once the release completes on-chain — see [`webhooks.md`](./webhooks.md).
+
+## `refund(id, input)`
+
+Refunds an escrow-configured charge's entire live token balance from
+its dedicated Safe back to the address that funded it, instead of the
+split address — no distribution follows, the full balance goes
+straight to the payer:
+
+```ts
+const charge = await klap.charges.refund('ch_abc123', {
+  signature: '0x2d0fbf1dba287883a4b6c5aeef9da7653dc68b3e20417d42e87db700ad9e878...',
+})
+```
+
+`signature` works exactly like [`release()`](#release-id-input)'s —
+a valid Safe transaction signature from this charge's
+`escrowReleaserAddress`, verified on-chain by the Safe contract itself,
+authorizing a transfer of the escrow's full live balance. Mutually
+exclusive with `release()` — an escrow can only ever be released or
+refunded once, never both; whichever happens first rejects the other
+with `409 escrow_already_released`/`409 escrow_already_refunded`.
+Requires `charges:write`. Fires `charge.escrow_refunded` once the
+refund completes on-chain — see [`webhooks.md`](./webhooks.md).
 
 ## `watch(id, signal?)`
 
