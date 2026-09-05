@@ -1,4 +1,4 @@
-import type { Charge } from '@klappay/types'
+import type { Charge, ConfirmationProgress } from '@klappay/types'
 import { MissingCredentialError } from './errors'
 import type { HttpConfig } from './http'
 
@@ -65,4 +65,16 @@ export async function* streamChargeEvents(
   for await (const { event, data } of streamSSEEvents<Charge>(config, path, signal)) {
     if (event === 'charge') yield data
   }
+}
+
+export function isChargeEvent(
+  event: SSEEvent<Charge | ConfirmationProgress>,
+): event is SSEEvent<Charge> {
+  return event.event === 'charge'
+}
+
+export function isConfirmationProgressEvent(
+  event: SSEEvent<Charge | ConfirmationProgress>,
+): event is SSEEvent<ConfirmationProgress> {
+  return event.event === 'confirmation_progress'
 }

@@ -1,6 +1,13 @@
+import type { Charge, ConfirmationProgress } from '@klappay/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MissingCredentialError } from './errors'
-import { streamChargeEvents, streamSSEEvents } from './sse'
+import {
+  type SSEEvent,
+  isChargeEvent,
+  isConfirmationProgressEvent,
+  streamChargeEvents,
+  streamSSEEvents,
+} from './sse'
 
 function fakeSseResponse(body: string): Response {
   return fakeSseResponseChunks([body])
@@ -160,5 +167,59 @@ describe('streamChargeEvents', () => {
     )
 
     await expect(iterator.next()).rejects.toThrow('SSE connection failed with status 500')
+  })
+})
+
+describe('isChargeEvent / isConfirmationProgressEvent', () => {
+  const FAKE_CHARGE: Charge = {
+    id: 'ch_fake',
+    amount: 10,
+    amountReceived: null,
+    isOverpaid: false,
+    feePayer: 'merchant',
+    feePercent: 1,
+    feeAmount: 0.1,
+    merchantAmount: 9.9,
+    currency: 'USD',
+    acceptedPayments: [{ token: 'USDC', network: 'base' }],
+    paidWith: [],
+    swapAlternatives: [],
+    address: '0xabc',
+    status: 'pending',
+    settlementStatus: null,
+    environment: 'test',
+    apiKeyId: null,
+    txHash: null,
+    externalRef: null,
+    source: null,
+    metadata: null,
+    redirectUrl: null,
+    checkoutUrl: null,
+    splitRecipients: [],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    expiresAt: '2026-01-01T01:00:00.000Z',
+    confirmedAt: null,
+    settledAt: null,
+    lastActivityAt: '2026-01-01T00:00:00.000Z',
+    escrow: null,
+  }
+  const FAKE_PROGRESS: ConfirmationProgress = {
+    network: 'base',
+    percent: 50,
+    blocksSeen: 1,
+    blocksRequired: 2,
+  }
+
+  const charge: SSEEvent<Charge | ConfirmationProgress> = { event: 'charge', data: FAKE_CHARGE }
+  const progress: SSEEvent<Charge | ConfirmationProgress> = {
+    event: 'confirmation_progress',
+    data: FAKE_PROGRESS,
+  }
+
+  it('discriminates a charge event from a confirmation_progress event', () => {
+    expect(isChargeEvent(charge)).toBe(true)
+    expect(isChargeEvent(progress)).toBe(false)
+    expect(isConfirmationProgressEvent(progress)).toBe(true)
+    expect(isConfirmationProgressEvent(charge)).toBe(false)
   })
 })

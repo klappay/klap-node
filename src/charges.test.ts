@@ -6,12 +6,13 @@ vi.mock('./http', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./http')>()
   return { ...actual, request: vi.fn() }
 })
-vi.mock('./sse', () => ({ streamChargeEvents: vi.fn() }))
+vi.mock('./sse', () => ({ streamChargeEvents: vi.fn(), streamSSEEvents: vi.fn() }))
 
 const { request } = await import('./http')
 const requestMock = vi.mocked(request)
-const { streamChargeEvents } = await import('./sse')
+const { streamChargeEvents, streamSSEEvents } = await import('./sse')
 const streamMock = vi.mocked(streamChargeEvents)
+const streamEventsMock = vi.mocked(streamSSEEvents)
 
 const config = { baseUrl: 'https://api.example.com', apiKey: 'klap_test_key' }
 
@@ -377,6 +378,24 @@ describe('createChargesClient().watch()', () => {
     createChargesClient(config).watch('ch_fake')
 
     expect(streamMock).toHaveBeenCalledWith(
+      config,
+      '/v1/charges/ch_fake/events',
+      expect.any(AbortSignal),
+    )
+  })
+})
+
+describe('createChargesClient().watchEvents()', () => {
+  beforeEach(() => {
+    streamEventsMock.mockReset()
+  })
+
+  it('opens the raw event stream, unfiltered, for the given charge id', () => {
+    streamEventsMock.mockReturnValue((async function* () {})())
+
+    createChargesClient(config).watchEvents('ch_fake')
+
+    expect(streamEventsMock).toHaveBeenCalledWith(
       config,
       '/v1/charges/ch_fake/events',
       expect.any(AbortSignal),

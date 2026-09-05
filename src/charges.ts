@@ -3,6 +3,7 @@ import {
   type Charge,
   type CheckChargeRequest,
   type CheckChargeResponse,
+  type ConfirmationProgress,
   type CreateChargeRequest,
   type CreateSwapQuoteInput,
   type GetChargeQrCodeQueryRequest,
@@ -16,7 +17,7 @@ import {
 } from '@klappay/types'
 import { type CheckedCharge, type KlapCharge, wrapCharge } from './charges-wait'
 import { type HttpConfig, request, withApiKeyEnvFallback } from './http'
-import { streamChargeEvents } from './sse'
+import { type SSEEvent, streamChargeEvents, streamSSEEvents } from './sse'
 
 export type { CheckedCharge, KlapCharge, WaitOptions } from './charges-wait'
 
@@ -177,6 +178,24 @@ export function createChargesClient(passedConfig: HttpConfig = {}) {
      */
     watch(id: string, signal: AbortSignal = new AbortController().signal): AsyncGenerator<Charge> {
       return streamChargeEvents(config, `/v1/charges/${encodeURIComponent(id)}/events`, signal)
+    },
+
+    /**
+     * Same underlying stream as `watch()`, without the `event: charge`
+     * filter — also yields `event: confirmation_progress` events (the
+     * same data `WaitOptions.onConfirmationProgress` receives), so a
+     * caller can observe both on one connection. Use `isChargeEvent`/
+     * `isConfirmationProgressEvent` to discriminate.
+     */
+    watchEvents(
+      id: string,
+      signal: AbortSignal = new AbortController().signal,
+    ): AsyncGenerator<SSEEvent<Charge | ConfirmationProgress>> {
+      return streamSSEEvents<Charge | ConfirmationProgress>(
+        config,
+        `/v1/charges/${encodeURIComponent(id)}/events`,
+        signal,
+      )
     },
   }
 }

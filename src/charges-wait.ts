@@ -6,7 +6,7 @@ import {
   WaitTimeoutError,
 } from './errors'
 import { type HttpConfig, request } from './http'
-import { type SSEEvent, streamSSEEvents } from './sse'
+import { type SSEEvent, isChargeEvent, isConfirmationProgressEvent, streamSSEEvents } from './sse'
 
 const DEFAULT_TIMEOUT_MS = 60 * 60_000
 const DEFAULT_POLL_INTERVAL_MS = 2_000
@@ -86,16 +86,6 @@ async function pollOrStreamUntil(
 
   options.signal?.throwIfAborted()
   return waitViaPolling(config, chargeId, deadline, timeoutMs, options, check)
-}
-
-function isConfirmationProgressEvent(
-  event: SSEEvent<Charge | ConfirmationProgress>,
-): event is SSEEvent<ConfirmationProgress> {
-  return event.event === 'confirmation_progress'
-}
-
-function isChargeEvent(event: SSEEvent<Charge | ConfirmationProgress>): event is SSEEvent<Charge> {
-  return event.event === 'charge'
 }
 
 async function waitViaSse(

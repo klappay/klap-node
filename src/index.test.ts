@@ -14,6 +14,8 @@ describe('package public exports', () => {
     expect(sdk.createNetworksClient).toBeTypeOf('function')
     expect(sdk.createRecipientsClient).toBeTypeOf('function')
     expect(sdk.streamSSEEvents).toBeTypeOf('function')
+    expect(sdk.isChargeEvent).toBeTypeOf('function')
+    expect(sdk.isConfirmationProgressEvent).toBeTypeOf('function')
   })
 
   it('exposes every error class', () => {

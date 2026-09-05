@@ -12,7 +12,10 @@ vi.mock('./http', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./http')>()
   return { ...actual, request: vi.fn() }
 })
-vi.mock('./sse', () => ({ streamSSEEvents: vi.fn() }))
+vi.mock('./sse', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./sse')>()),
+  streamSSEEvents: vi.fn(),
+}))
 
 const { request } = await import('./http')
 const requestMock = vi.mocked(request)

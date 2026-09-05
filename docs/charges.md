@@ -576,6 +576,32 @@ integrations want `waitForConfirmation()`/`waitForSettlement()`/
 `waitFor()` instead — they wrap this exact stream with a typed,
 Promise-based API and a polling fallback.
 
+This filters the connection down to `Charge` updates only — see
+[`watchEvents()`](#watchevents-id-signal) below to also observe
+`confirmation_progress` events on the same connection.
+
+## `watchEvents(id, signal?)`
+
+```ts
+import { isChargeEvent, isConfirmationProgressEvent } from '@klappay/node'
+
+for await (const event of klap.charges.watchEvents('ch_abc123')) {
+  if (isChargeEvent(event)) {
+    console.log(event.data.status, event.data.settlementStatus)
+  } else if (isConfirmationProgressEvent(event)) {
+    console.log(event.data.network, event.data.percent)
+  }
+}
+```
+
+Same underlying stream as `watch()`, without the `event: charge`
+filter — also yields `event: confirmation_progress` events (the same
+data `WaitOptions.onConfirmationProgress` receives, see
+[Observing a charge until it resolves](#observing-a-charge-until-it-resolves)),
+so a caller can observe both on one connection. Use the exported
+`isChargeEvent`/`isConfirmationProgressEvent` type guards to
+discriminate the union.
+
 ## Raw SSE access
 
 `watch()` itself is built on `streamSSEEvents`, the SDK's lowest-level
