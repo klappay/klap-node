@@ -78,6 +78,27 @@ so reading a charge back tells you where the money actually went without
 a second lookup. See [`recipients.md`](./recipients.md) for registering
 recipients and the full request/response shape split.
 
+### `feePayer`
+
+By default (`feePayer: 'merchant'`, the default) Klappay's fee is
+deducted from `amount` before it reaches your payout. Set
+`feePayer: 'payer'` instead to gross up `amount` so the payer covers the
+fee — you receive the full `amount` you asked for:
+
+```ts
+const charge = await klap.charges.create({
+  amount: 49.9,
+  acceptedPayments: [{ token: 'USDC', network: 'base' }],
+  expiresIn: 3600,
+  feePayer: 'payer',
+})
+```
+
+Either way, the returned charge carries `feePercent`, `feeAmount`, and
+`merchantAmount` so you can render a price breakdown without
+reimplementing the fee math yourself — `merchantAmount` is always what
+actually lands in your payout, regardless of who covered the fee.
+
 ### `escrow`
 
 `CreateChargeSchema`/`ChargeSchema` carry an `escrow` field —
@@ -192,6 +213,18 @@ option names (`timeoutMs`, `pollIntervalMs`, `onStatusChange`) are
 transport-agnostic — `pollIntervalMs` only matters if the fallback path
 ends up being used; your code never has to know which transport actually
 resolved the wait.
+
+`onConfirmationProgress` reports how close an already-detected transfer
+is to its network's required confirmation depth, for rendering a
+"confirming payment" progress bar instead of a blank wait — only fires
+on the live SSE path (there's no polling equivalent; it's not part of
+`GET /v1/charges/{id}`'s response):
+
+```ts
+await charge.waitForConfirmation({
+  onConfirmationProgress: (p) => console.log(`${p.network}: ${p.percent}%`),
+})
+```
 
 ### Cancelling a wait
 
@@ -363,7 +396,10 @@ const events = await klap.charges.getTimeline('ch_abc123')
 
 Every event recorded against a charge, in chronological order — useful
 for debugging a specific payment (why didn't a webhook fire? was a
-transfer detected at all?) without separate audit tooling.
+transfer detected at all?) without separate audit tooling. Includes
+`transfer.reclaimed` — an on-chain transfer that was detected but never
+reached its network's required confirmation depth before vanishing
+(reverted, or dropped from the canonical chain).
 
 ## `getQrCode(id, query?)`
 
@@ -466,6 +502,12 @@ when the payment routed through a swap/aggregator on the way in,
 unlike the credited transfer's own sender (which can be a router/pool
 contract). Only populated when `txHash`/`network` was passed and a
 matching receipt was found; `null` otherwise.
+
+It also carries `confirmationProgress` — non-null while a detected
+transfer hasn't yet reached its network's required confirmation depth,
+same shape `waitForConfirmation()`'s `onConfirmationProgress` reports
+live over SSE (see [above](#observing-a-charge-until-it-resolves));
+`null` otherwise.
 
 ## `release(id, input)`
 

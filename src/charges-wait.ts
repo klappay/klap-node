@@ -1,4 +1,4 @@
-import type { Charge, TriggerableChargeEvent } from '@klappay/types'
+import type { Charge, ConfirmationProgress, TriggerableChargeEvent } from '@klappay/types'
 import {
   ChargeExpiredError,
   ChargeUnderpaidError,
@@ -6,7 +6,7 @@ import {
   WaitTimeoutError,
 } from './errors'
 import { type HttpConfig, request } from './http'
-import { streamChargeEvents } from './sse'
+import { type SSEEvent, streamSSEEvents } from './sse'
 
 const DEFAULT_TIMEOUT_MS = 60 * 60_000
 const DEFAULT_POLL_INTERVAL_MS = 2_000
@@ -17,6 +17,8 @@ export type WaitOptions = {
   timeoutMs?: number
   pollIntervalMs?: number
   onStatusChange?: (charge: Charge) => void
+  /** Fires whenever a detected transfer isn't yet at its network's confirmation depth. SSE path only — no polling fallback, since it's not available from `GET /v1/charges/{id}`. */
+  onConfirmationProgress?: (progress: ConfirmationProgress) => void
   /** Cancels the wait early — same pattern as `fetch`. Rejects with the signal's own `reason` (an `AbortError` `DOMException` by default). Does not cancel an in-flight status check already sent to the API; it takes effect on the next check or during the wait between checks. */
   signal?: AbortSignal
 }
@@ -86,6 +88,16 @@ async function pollOrStreamUntil(
   return waitViaPolling(config, chargeId, deadline, timeoutMs, options, check)
 }
 
+function isConfirmationProgressEvent(
+  event: SSEEvent<Charge | ConfirmationProgress>,
+): event is SSEEvent<ConfirmationProgress> {
+  return event.event === 'confirmation_progress'
+}
+
+function isChargeEvent(event: SSEEvent<Charge | ConfirmationProgress>): event is SSEEvent<Charge> {
+  return event.event === 'charge'
+}
+
 async function waitViaSse(
   config: HttpConfig,
   chargeId: string,
@@ -99,7 +111,7 @@ async function waitViaSse(
   const timeoutId = setTimeout(() => controller.abort(), Math.max(deadline - Date.now(), 0))
   const onExternalAbort = () => controller.abort(options.signal?.reason)
   options.signal?.addEventListener('abort', onExternalAbort, { once: true })
-  const iterator = streamChargeEvents(
+  const iterator = streamSSEEvents<Charge | ConfirmationProgress>(
     config,
     `/v1/charges/${encodeURIComponent(chargeId)}/events`,
     controller.signal,
@@ -107,7 +119,7 @@ async function waitViaSse(
 
   try {
     for (;;) {
-      let next: IteratorResult<Charge>
+      let next: IteratorResult<SSEEvent<Charge | ConfirmationProgress>>
       try {
         next = await iterator.next()
       } catch {
@@ -119,8 +131,15 @@ async function waitViaSse(
         return null
       }
 
-      options.onStatusChange?.(next.value)
-      const outcome = check(next.value)
+      if (isConfirmationProgressEvent(next.value)) {
+        options.onConfirmationProgress?.(next.value.data)
+        continue
+      }
+      if (!isChargeEvent(next.value)) continue
+
+      const charge = next.value.data
+      options.onStatusChange?.(charge)
+      const outcome = check(charge)
       if (outcome.done) return outcome.result
     }
   } finally {

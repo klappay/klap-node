@@ -12,18 +12,22 @@ vi.mock('./http', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./http')>()
   return { ...actual, request: vi.fn() }
 })
-vi.mock('./sse', () => ({ streamChargeEvents: vi.fn() }))
+vi.mock('./sse', () => ({ streamSSEEvents: vi.fn() }))
 
 const { request } = await import('./http')
 const requestMock = vi.mocked(request)
-const { streamChargeEvents } = await import('./sse')
-const streamMock = vi.mocked(streamChargeEvents)
+const { streamSSEEvents } = await import('./sse')
+const streamMock = vi.mocked(streamSSEEvents)
 
 const FAKE_CHARGE: Charge = {
   id: 'ch_fake',
   amount: 10,
   amountReceived: null,
   isOverpaid: false,
+  feePayer: 'merchant',
+  feePercent: 1,
+  feeAmount: 0.1,
+  merchantAmount: 9.9,
   currency: 'USD',
   acceptedPayments: [{ token: 'USDC', network: 'base' }],
   paidWith: [],
@@ -289,8 +293,8 @@ describe('waitForConfirmation() via the live SSE stream (apiKey configured)', ()
     requestMock.mockClear()
 
     streamMock.mockImplementation(async function* () {
-      yield { ...FAKE_CHARGE, status: 'pending' }
-      yield { ...FAKE_CHARGE, status: 'confirmed' }
+      yield { event: 'charge', data: { ...FAKE_CHARGE, status: 'pending' } }
+      yield { event: 'charge', data: { ...FAKE_CHARGE, status: 'confirmed' } }
     })
 
     const onStatusChange = vi.fn()
@@ -313,5 +317,25 @@ describe('waitForConfirmation() via the live SSE stream (apiKey configured)', ()
 
     expect(result.status).toBe('confirmed')
     expect(requestMock).toHaveBeenCalled()
+  })
+
+  it('reports confirmation_progress events without treating them as a status change', async () => {
+    requestMock.mockResolvedValueOnce(FAKE_CHARGE)
+    const charge = await createChargesClient(config).get('ch_fake')
+    requestMock.mockClear()
+
+    const progress = { network: 'base', blocksSeen: 2, blocksRequired: 5, percent: 40 } as const
+    streamMock.mockImplementation(async function* () {
+      yield { event: 'confirmation_progress', data: progress }
+      yield { event: 'charge', data: { ...FAKE_CHARGE, status: 'confirmed' } }
+    })
+
+    const onStatusChange = vi.fn()
+    const onConfirmationProgress = vi.fn()
+    const result = await charge.waitForConfirmation({ onStatusChange, onConfirmationProgress })
+
+    expect(result.status).toBe('confirmed')
+    expect(onConfirmationProgress).toHaveBeenCalledExactlyOnceWith(progress)
+    expect(onStatusChange).toHaveBeenCalledTimes(1)
   })
 })

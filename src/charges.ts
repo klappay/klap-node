@@ -95,6 +95,10 @@ export function createChargesClient(passedConfig: HttpConfig = {}) {
      * transaction's own signer, which stays the payer's real wallet even
      * when the payment routed through a swap/aggregator. Only populated
      * when `txHash`/`network` was passed and a matching receipt was found.
+     * `confirmationProgress` is non-null while a detected transfer is
+     * still short of its network's required confirmation depth (see
+     * `WaitOptions.onConfirmationProgress` for the live-stream
+     * equivalent), `null` otherwise.
      */
     async check(
       id: string,
