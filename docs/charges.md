@@ -99,6 +99,23 @@ Either way, the returned charge carries `feePercent`, `feeAmount`, and
 reimplementing the fee math yourself — `merchantAmount` is always what
 actually lands in your payout, regardless of who covered the fee.
 
+### Exact amounts
+
+`amount` and `amountReceived` are legacy JSON numbers, which can lose
+precision. `amountExact` (up to 6 fractional digits, the target's own
+precision) and `amountReceivedExact` (up to 18, matching what's actually
+detected on-chain — `null` until the first transfer arrives) are the
+same values as decimal strings with no scientific notation; prefer them
+for arithmetic and payment preparation. Both are optional, for
+compatibility with responses from an older API version — fall back to
+the numeric field when absent.
+
+`paymentUnavailable` is `true` when payment processing for this charge
+is temporarily paused (its other status/monetary fields still reflect
+where it stood, but don't rely on them to fulfill, and don't request
+another transfer, until it clears) — check it before showing payment
+instructions, alongside the existing `status`/`settlementStatus` checks.
+
 ### `escrow`
 
 `CreateChargeSchema`/`ChargeSchema` carry an `escrow` field —
@@ -442,14 +459,22 @@ Klap never sees or custodies the input cryptocurrency, and the merchant
 always receives the charge's full remaining amount (`quote.outputAmount`)
 regardless of what the payer sent. Klap charges the payer a separate fee
 on top (`quote.fees.klappayFee`, plus 0x's own `quote.fees.zeroExFee`
-when it applies) — neither ever reduces `outputAmount`.
+when it applies) — neither ever reduces `outputAmount`. `outputAmount`
+and `fees.klappayFee`/`fees.zeroExFee` are legacy JSON numbers;
+`outputAmountExact`/`inputAmountExact` and
+`fees.klappayFeeExact`/`fees.zeroExFeeExact` are the same values as
+decimal strings (`zeroExFeeExact` is `null` when no 0x fee applies) —
+optional, for compatibility with an older API version, but prefer them
+for arithmetic.
 
 **Two client-side flows depending on `inputToken`**: a network's own
-native currency (`ETH`/`BNB`/`MATIC`/`AVAX`) needs no extra step — sign
-and send `quote.transaction` directly. An ERC-20 input (today, only
-`BTC`) additionally returns `quote.permit2` — sign that EIP-712 message
-first and append the signature to `quote.transaction.data` before
-sending.
+native currency (`ETH`/`BNB`/`POL`/`AVAX`) needs no extra step — sign
+and send `quote.transaction` directly (`POL` replaced `MATIC` as
+Polygon's native currency ticker after its 2024 token migration — same
+asset). An ERC-20 input (`BTC`, `LINK`, `ARB`, `OP`, `CBETH` — see
+`AltTokenSchema` in `@klappay/types` for which network trusts which)
+additionally returns `quote.permit2` — sign that EIP-712 message first
+and append the signature to `quote.transaction.data` before sending.
 
 `quote.expiresAt` is a rough guide for a UI countdown only — the actual
 price is enforced on-chain by the swap transaction itself, not by this
