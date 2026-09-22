@@ -42,13 +42,25 @@ describe('createRecipientsClient()', () => {
     expect(result).toEqual(FAKE_RECIPIENT)
   })
 
-  it('list() fetches every non-revoked recipient with no query params', async () => {
-    requestMock.mockResolvedValue([FAKE_RECIPIENT])
+  it('list() defaults the query to the default pagination limit', async () => {
+    requestMock.mockResolvedValue({ data: [FAKE_RECIPIENT], nextCursor: null, hasMore: false })
 
     const result = await createRecipientsClient(config).list()
 
-    expect(requestMock).toHaveBeenCalledWith(config, { method: 'GET', path: '/v1/recipients' })
-    expect(result).toEqual([FAKE_RECIPIENT])
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'GET',
+      path: '/v1/recipients',
+      query: { limit: 20 },
+    })
+    expect(result).toEqual({ data: [FAKE_RECIPIENT], nextCursor: null, hasMore: false })
+  })
+
+  it('list() passes through a custom limit/cursor', async () => {
+    requestMock.mockResolvedValue({ data: [], nextCursor: null, hasMore: false })
+
+    await createRecipientsClient(config).list({ limit: 5, cursor: 'cur_1' })
+
+    expect(requestMock.mock.calls[0]?.[1].query).toEqual({ limit: 5, cursor: 'cur_1' })
   })
 
   it('setPayout() PATCHes only the payout flag for the given id', async () => {
@@ -86,6 +98,51 @@ describe('createRecipientsClient()', () => {
   })
 })
 
+describe('createRecipientsClient().listAll()', () => {
+  beforeEach(() => {
+    requestMock.mockReset()
+  })
+
+  it('follows cursors across pages, yielding every recipient', async () => {
+    requestMock
+      .mockResolvedValueOnce({
+        data: [{ ...FAKE_RECIPIENT, id: 'rc_1' }],
+        nextCursor: 'cur_2',
+        hasMore: true,
+      })
+      .mockResolvedValueOnce({
+        data: [{ ...FAKE_RECIPIENT, id: 'rc_2' }],
+        nextCursor: null,
+        hasMore: false,
+      })
+
+    const ids: string[] = []
+    for await (const recipient of createRecipientsClient(config).listAll()) {
+      ids.push(recipient.id)
+    }
+
+    expect(ids).toEqual(['rc_1', 'rc_2'])
+    expect(requestMock.mock.calls[0]?.[1].query).toMatchObject({ limit: 100 })
+    expect(requestMock.mock.calls[1]?.[1].query).toMatchObject({ cursor: 'cur_2' })
+  })
+
+  it('stops after one page when hasMore is false, even if nextCursor is non-null', async () => {
+    requestMock.mockResolvedValueOnce({
+      data: [{ ...FAKE_RECIPIENT, id: 'rc_1' }],
+      nextCursor: 'cur_2',
+      hasMore: false,
+    })
+
+    const ids: string[] = []
+    for await (const recipient of createRecipientsClient(config).listAll()) {
+      ids.push(recipient.id)
+    }
+
+    expect(ids).toEqual(['rc_1'])
+    expect(requestMock).toHaveBeenCalledTimes(1)
+  })
+})
+
 describe('createRecipientsClient() env fallback', () => {
   beforeEach(() => {
     requestMock.mockReset()
@@ -97,7 +154,7 @@ describe('createRecipientsClient() env fallback', () => {
 
   it('falls back to KLAP_RECIPIENTS_API_KEY when apiKey is omitted', async () => {
     vi.stubEnv('KLAP_RECIPIENTS_API_KEY', 'klap_env_key')
-    requestMock.mockResolvedValue([])
+    requestMock.mockResolvedValue({ data: [], nextCursor: null, hasMore: false })
 
     await createRecipientsClient({ baseUrl: 'https://api.example.com' }).list()
 
@@ -106,7 +163,7 @@ describe('createRecipientsClient() env fallback', () => {
 
   it('prefers an explicit apiKey over KLAP_RECIPIENTS_API_KEY', async () => {
     vi.stubEnv('KLAP_RECIPIENTS_API_KEY', 'klap_env_key')
-    requestMock.mockResolvedValue([])
+    requestMock.mockResolvedValue({ data: [], nextCursor: null, hasMore: false })
 
     await createRecipientsClient({
       baseUrl: 'https://api.example.com',

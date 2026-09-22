@@ -66,15 +66,37 @@ in addition to `charges:write`.
 ## Listing and revoking
 
 ```ts
-const recipients = await klap.recipients.list()
-// every non-revoked recipient for this environment, newest first — not paginated
+const page = await klap.recipients.list({ limit: 20 })
+// page.data, page.nextCursor, page.hasMore
 
 await klap.recipients.revoke(recipient.id)
 ```
 
-`list()` returns `[]`, not an error, when the environment has no
-registered recipients yet — there's no separate "empty" signal to check
-for beyond the array's length.
+`list()` is one page (cursor-based, same as the REST API) — walk pages
+yourself by feeding `nextCursor` back in as `cursor` until `hasMore` is
+`false`:
+
+```ts
+let cursor: string | undefined
+do {
+  const page = await klap.recipients.list({ cursor })
+  for (const recipient of page.data) console.log(recipient.id)
+  cursor = page.nextCursor ?? undefined
+} while (cursor)
+```
+
+`listAll()` is an async generator that pages through every non-revoked
+recipient for this environment, newest first, automatically instead:
+
+```ts
+for await (const recipient of klap.recipients.listAll()) {
+  console.log(recipient.id)
+}
+```
+
+`list()`'s page can come back with an empty `data` array, not an error,
+when the environment has no (more) registered recipients — there's no
+separate "empty" signal to check for beyond the array's length.
 
 Revoking a recipient that's currently referenced by `payout: true` (see
 below) needs `recipients:manage_payout` instead of `recipients:write` —
