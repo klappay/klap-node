@@ -6,7 +6,12 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignore": ["dist", "node_modules"]
+    "ignore": [
+      "dist",
+      "node_modules",
+      ".claude/helpers/graft-hooks.cjs",
+      ".claude/helpers/graft-statusline.cjs"
+    ]
   },
   "formatter": {
     "enabled": true,
