@@ -15,13 +15,20 @@ const page = await distributions.list()
 `KLAP_DISTRIBUTIONS_API_KEY` (see [`getting-started.md`](./getting-started.md#environment-variables))
 if omitted.
 
-This is for **keepers/bots**, not a typical merchant integration.
-0xSplits' `distribute()` is permissionless — anyone can call it and
-receive a small `distributorFeePercent` reward — and this resource
-exists so a keeper can discover which splits are currently claimable
-within their grace period, before Klap's own worker gets to them.
-Ignore this entirely unless you're specifically building or running
-such a keeper.
+This is for **keepers/bots**, not a typical merchant integration. The
+split contract's own `distribute()` is permissionless — anyone can call
+it and receive a small `distributorFeePercent` reward — and this
+resource exists so a keeper can discover which splits are currently
+claimable within their grace period, before Klap's own worker gets to
+them. Ignore this entirely unless you're specifically building or
+running such a keeper.
+
+Which contract that actually is depends on `distribution.network`: an
+official 0xSplits deployment on EVM networks (`base`, `optimism`,
+`polygon`, `ethereum`, `arbitrum`, `avalanche`, `bnb`), Arc's own
+0xSplits fork on `arc`, and a separate, non-EVM contract on `tron` —
+branch on it with `NETWORK_FAMILIES` from `@klappay/types` rather than
+assuming one ABI for every network.
 
 ## Putting it together: a minimal keeper
 
@@ -52,8 +59,9 @@ for await (const event of events) {
 }
 
 async function distributeSplit(distribution: PendingDistribution) {
-  // 0xSplits' own on-chain `distribute()` — a contract call your keeper
-  // submits directly, not a klap-node method:
+  // The split contract's own on-chain `distribute()` — a contract call
+  // your keeper submits directly, not a klap-node method. Which contract
+  // that is depends on distribution.network; see NETWORK_FAMILIES above:
   // await splitsClient.distribute({
   //   splitAddress: distribution.splitAddress,
   //   token: distribution.token,

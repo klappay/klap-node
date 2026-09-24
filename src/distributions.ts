@@ -22,11 +22,14 @@ export function createDistributionsClient(passedConfig: HttpConfig = {}) {
     /**
      * Cursor-paginated snapshot of every split in the calling key's own
      * environment with a confirmed payout still inside its grace period
-     * before Klap's own worker claims it — `distribute()` on 0xSplits is
-     * permissionless, so this is for discoverability, not a new on-chain
-     * capability. Pair with `streamPending()` for real-time deltas — open
-     * that stream *first*, then call this (or `listAll()`) to bootstrap
-     * state, per the API's own ordering guidance.
+     * before Klap's own worker claims it — the split contract's own
+     * `distribute()` is permissionless (0xSplits on EVM networks and
+     * Arc's 0xSplits fork; a separate contract on TRON — see
+     * `NETWORK_FAMILIES` in `@klappay/types` to branch by `network`), so
+     * this is for discoverability, not a new on-chain capability. Pair
+     * with `streamPending()` for real-time deltas — open that stream
+     * *first*, then call this (or `listAll()`) to bootstrap state, per
+     * the API's own ordering guidance.
      */
     list,
 

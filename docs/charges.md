@@ -125,6 +125,12 @@ address ([`release(id, input)`](#release-id-input)) or back to the payer
 ([`refund(id, input)`](#refund-id-input)) — mutually exclusive, an
 escrow charge only ever goes one way.
 
+**Every `acceptedPayments` network must be EVM when `escrow` is set** —
+funds land in a dedicated Safe, which isn't deployed on TRON and never
+will be (it isn't an EVM chain); `create()` rejects a mixed or
+TRON-only `acceptedPayments` list with `400 validation_error` when
+`escrow` is present. Arc is EVM-compatible, so it's fine for escrow.
+
 ```ts
 const charge = await klap.charges.create({
   amount: 49.9,
@@ -139,7 +145,7 @@ Everything else about `create()` — `acceptedPayments`, `expiresIn`,
 charge; `escrow` only changes how the funds are released once paid.
 
 `acceptedPayments` lets the payer choose which rail to actually use — at
-least one `(token, network)` pair, up to 14. Every transfer on an
+least one `(token, network)` pair, up to 18. Every transfer on an
 accepted pair is credited and sums toward the charge total —
 `charge.paidWith` is an array of every distinct pair that has actually
 contributed so far (empty until the first one arrives), so a charge

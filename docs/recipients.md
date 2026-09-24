@@ -14,7 +14,8 @@ const recipient = await recipients.create({ address: '0x...ab', label: 'sales re
 `KLAP_RECIPIENTS_API_KEY` (see [`getting-started.md`](./getting-started.md#environment-variables))
 if omitted.
 
-A recipient is a trusted EVM address you register once, so a charge's
+A recipient is a trusted address — EVM (`0x...`, including Arc) or TRON
+(`T...`) — you register once, so a charge's
 [`splitRecipients`](./charges.md) can reference it by `id` instead of a
 raw address. This exists to close a redirect risk: with `charges:write`
 alone, a key can never route a slice of a payment to an address you
