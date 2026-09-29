@@ -1,5 +1,12 @@
 # @klappay/node
 
+## 5.1.2
+
+### Patch Changes
+
+- 42c78ad: Bumps `@klappay/types` to `^5.2.0`, which re-enables USDC/USDT payments on BNB Chain (`live`). No SDK API change — `bnb` pairs now show up in `networks.get()` and are accepted by `charges.create()`. `docs/charges.md` now notes that BNB's Binance-Peg tokens use 18 decimals, so prefer `amountReceivedExact` over the numeric `amountReceived`.
+- 0f2e500: Updates the README/docs logo, favicon, and docs dark-theme accent to Klappay's new brand. The duplicate root `logo.png` is no longer shipped in the package; the README now points at `docs/public/logo.png`.
+
 ## 5.1.1
 
 ### Patch Changes
