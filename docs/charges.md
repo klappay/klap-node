@@ -110,6 +110,15 @@ for arithmetic and payment preparation. Both are optional, for
 compatibility with responses from an older API version — fall back to
 the numeric field when absent.
 
+BNB Chain's USDC/USDT are Binance-Peg tokens with 18 on-chain decimals
+(every other deployment uses 6) — a charge paid on `bnb` is exactly the
+case where `amountReceivedExact` carries more fractional digits than a
+JSON number can hold. Binance-Peg tokens are backed and custodied by
+Binance, not issued directly by Circle/Tether, so don't label them as
+such in your own UI. If you build transfers yourself, resolve the
+address and decimals together with `getTokenDeployment` from
+`@klappay/types` rather than assuming 6.
+
 `paymentUnavailable` is `true` when payment processing for this charge
 is temporarily paused (its other status/monetary fields still reflect
 where it stood, but don't rely on them to fulfill, and don't request
