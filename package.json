@@ -58,7 +58,7 @@
       "require": "./dist/recipients.cjs"
     }
   },
-  "files": ["dist", "LICENSE", "README.md", "logo.png", "docs"],
+  "files": ["dist", "LICENSE", "README.md", "docs"],
   "publishConfig": {
     "access": "public"
   },

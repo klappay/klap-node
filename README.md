@@ -1,4 +1,4 @@
-<img src="./logo.png" alt="Klap" width="80" />
+<img src="./docs/public/logo.png" alt="Klap" width="80" />
 
 # @klappay/node
 
