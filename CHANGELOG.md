@@ -1,5 +1,11 @@
 # @klappay/node
 
+## 5.1.4
+
+### Patch Changes
+
+- 9e16389: Treat a successful response with an empty body (e.g. `202 Accepted` from `webhooks.retryDelivery`) as `undefined` instead of throwing `Unexpected end of JSON input`.
+
 ## 5.1.3
 
 ### Patch Changes
