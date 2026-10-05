@@ -160,8 +160,12 @@ accepted pair is credited and sums toward the charge total —
 contributed so far (empty until the first one arrives), so a charge
 accepting both USDC and USDT can be confirmed by, say, $9 in USDC plus $1
 in USDT. A transfer on a pair that isn't in `acceptedPayments` is still
-recorded but never credited. Not sure which pairs are actually live for
-your environment right now? See [`networks.md`](./networks.md) —
+recorded but never credited. Every EVM network (Arc included) can be
+mixed freely in one charge, but TRON can't be mixed with any of them —
+a charge pays out to one split address predicted up front, and TRON's
+split contract differs from the EVM one, so `create()` rejects a list
+mixing `tron` with an EVM network with `400 validation_error`. Not
+sure which pairs are actually live for your environment right now? See [`networks.md`](./networks.md) —
 `klap.networks.get()` returns the current matrix; build a payment-method
 picker from it instead of hardcoding the pairs client-side, since it
 changes as new networks/tokens come online.

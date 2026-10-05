@@ -23,12 +23,12 @@ claimable within their grace period, before Klap's own worker gets to
 them. Ignore this entirely unless you're specifically building or
 running such a keeper.
 
-Which contract that actually is depends on `distribution.network`: an
-official 0xSplits deployment on EVM networks (`base`, `optimism`,
-`polygon`, `ethereum`, `arbitrum`, `avalanche`, `bnb`), Arc's own
-0xSplits fork on `arc`, and a separate, non-EVM contract on `tron` —
-branch on it with `NETWORK_FAMILIES` from `@klappay/types` rather than
-assuming one ABI for every network.
+Which contract that actually is depends on `distribution.network`: the
+official 0xSplits v2.2 deployment on every EVM network (`base`,
+`optimism`, `polygon`, `ethereum`, `arbitrum`, `avalanche`, `bnb`,
+`arc`), and a separate, non-EVM contract on `tron` — branch on it with
+`NETWORK_FAMILIES` from `@klappay/types` (`'evm-official'` or `'tron'`)
+rather than assuming one ABI for every network.
 
 ## Putting it together: a minimal keeper
 
