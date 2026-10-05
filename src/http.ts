@@ -84,7 +84,9 @@ export async function request<T>(config: HttpConfig, options: RequestOptions): P
     )
   }
 
-  if (options.responseType === 'text') return (await res.text()) as T
+  const body = await res.text()
+  if (options.responseType === 'text') return body as T
+  if (body === '') return undefined as T
 
-  return (await res.json()) as T
+  return JSON.parse(body) as T
 }

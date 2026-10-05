@@ -108,6 +108,17 @@ describe('request()', () => {
     expect(jsonSpy).not.toHaveBeenCalled()
   })
 
+  it('returns undefined for a 202 response with an empty body', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 202 }))
+
+    const result = await request(
+      { ...baseConfig, apiKey: 'k' },
+      { method: 'POST', path: '/v1/webhooks/wh_1/deliveries/ev_1/retry' },
+    )
+
+    expect(result).toBeUndefined()
+  })
+
   it('returns the parsed JSON body on success', async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ id: 'ch_1' }), { status: 200 }))
     const result = await request({ ...baseConfig, apiKey: 'k' }, { method: 'GET', path: '/v1/x' })
