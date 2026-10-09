@@ -544,14 +544,25 @@ The result also carries `transactionSender` — the checked
 transaction's own signer, which stays the payer's real wallet even
 when the payment routed through a swap/aggregator on the way in,
 unlike the credited transfer's own sender (which can be a router/pool
-contract). Only populated when `txHash`/`network` was passed and a
-matching receipt was found; `null` otherwise.
+contract). Only populated when `txHash`/`network` was passed and that
+transaction actually paid this charge: on a still-open (or expired)
+charge, its receipt has to contain a Transfer of an accepted token to
+the charge's address (even one not yet deep enough to be credited); on
+an already-`confirmed`/`underpaid` charge, it has to be a transfer
+already credited to it on that network. `null` otherwise — no hint, a
+not-found/reverted transaction, or a successful transaction that never
+paid this charge — so a public `txHash` can't be used to claim someone
+else's payment. That makes it safe to call `check()` again with the
+same hint after [`watch()`](#watch-id-signal) reports `confirmed`, to
+learn the sender the stream itself doesn't carry.
 
 It also carries `confirmationProgress` — non-null while a detected
 transfer hasn't yet reached its network's required confirmation depth,
 same shape `waitForConfirmation()`'s `onConfirmationProgress` reports
 live over SSE (see [above](#observing-a-charge-until-it-resolves));
-`null` otherwise.
+`null` otherwise. A terminal charge is never re-scanned — it costs at
+most one receipt read, and only when the hint is a transfer already
+credited to it.
 
 ## `release(id, input)`
 
