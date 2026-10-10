@@ -92,14 +92,17 @@ export function createChargesClient(passedConfig: HttpConfig = {}) {
      * Never trusts the caller: the charge only changes state if a real
      * matching transfer is found on-chain. Rate-limited per charge.
      *
-     * The result also carries `transactionSender` — the checked
-     * transaction's own signer, which stays the payer's real wallet even
-     * when the payment routed through a swap/aggregator. Only populated
-     * when `txHash`/`network` was passed and that transaction actually
-     * paid this charge (a Transfer of an accepted token to the charge's
-     * address on an open charge, or a transfer already credited to it on
-     * a `confirmed`/`underpaid` one) — so it's safe to re-check with the
-     * same hint after the stream reports `confirmed` to learn the sender.
+     * The result also carries payer evidence: `transactionSender` (the
+     * checked transaction's own signer — the payer for a self-signing
+     * wallet, but a relayer/bundler when someone else submitted it),
+     * `tokenSenders` (the `from` of each paying accepted-token transfer)
+     * and `userOperationSenders` (the ERC-4337 account whose own user
+     * operation paid). Only populated when `txHash`/`network` was passed
+     * and that transaction actually paid this charge (a Transfer of an
+     * accepted token to the charge's address on an open charge, or a
+     * transfer already credited to it on a `confirmed`/`underpaid` one);
+     * otherwise `null`/`[]` — so it's safe to re-check with the same hint
+     * after the stream reports `confirmed` to learn who paid.
      * `confirmationProgress` is non-null while a detected transfer is
      * still short of its network's required confirmation depth (see
      * `WaitOptions.onConfirmationProgress` for the live-stream

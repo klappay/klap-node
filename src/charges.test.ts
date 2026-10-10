@@ -315,15 +315,22 @@ describe('createChargesClient().check()', () => {
     })
   })
 
-  it('surfaces transactionSender from the response', async () => {
-    requestMock.mockResolvedValue({ ...FAKE_CHARGE, transactionSender: '0xsender' })
+  it('surfaces the payer evidence from the response', async () => {
+    requestMock.mockResolvedValue({
+      ...FAKE_CHARGE,
+      transactionSender: '0xrelayer',
+      tokenSenders: ['0xwallet'],
+      userOperationSenders: ['0xsmartaccount'],
+    })
 
     const result = await createChargesClient(config).check('ch_fake', {
       txHash: `0x${'1'.repeat(64)}`,
       network: 'base',
     })
 
-    expect(result.transactionSender).toBe('0xsender')
+    expect(result.transactionSender).toBe('0xrelayer')
+    expect(result.tokenSenders).toEqual(['0xwallet'])
+    expect(result.userOperationSenders).toEqual(['0xsmartaccount'])
   })
 })
 

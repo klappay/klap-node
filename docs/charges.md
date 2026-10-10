@@ -540,21 +540,45 @@ caller — prefer [`watch()`](#watch-id-signal) to observe the result
 instead of polling this repeatedly. See `@klappay/types`'
 `CheckChargeRequestSchema` for the full field documentation.
 
-The result also carries `transactionSender` — the checked
-transaction's own signer, which stays the payer's real wallet even
-when the payment routed through a swap/aggregator on the way in,
-unlike the credited transfer's own sender (which can be a router/pool
-contract). Only populated when `txHash`/`network` was passed and that
-transaction actually paid this charge: on a still-open (or expired)
-charge, its receipt has to contain a Transfer of an accepted token to
-the charge's address (even one not yet deep enough to be credited); on
-an already-`confirmed`/`underpaid` charge, it has to be a transfer
-already credited to it on that network. `null` otherwise — no hint, a
+The result also carries three pieces of on-chain evidence of who
+paid. Klappay reports them; deciding who the payer "is" stays with
+you:
+
+- `transactionSender` — the checked transaction's own signer. For a
+  wallet that signs its own transactions that's the payer, swap-to-pay
+  included (where the credited transfer's own sender is the
+  router/pool contract instead). It is **not** the payer when someone
+  else submitted the transaction: a gas-sponsoring relayer (an
+  EIP-7702 smart account, e.g. MetaMask's) or an ERC-4337 bundler.
+- `tokenSenders` — the checksummed `from` of each paying transfer (a
+  Transfer emitted by an accepted token's own contract to the charge's
+  address, mints excluded). Covers the relayer case: the tokens left
+  the wallet even though the relayer signed. For a swap-to-pay it
+  holds the router, not the payer.
+- `userOperationSenders` — the ERC-4337 account whose own successful
+  user operation produced a paying transfer (official EntryPoints
+  v0.6–v0.9 only). Other accounts sharing the same bundle are never
+  listed.
+
+A wallet appearing in any of the three is evidence it paid. A
+transaction settling several parties at once can list more than one
+address in `tokenSenders`, so pair the evidence with your own
+per-`txHash` uniqueness check. Not covered by any of them: an
+EIP-7702 wallet behind a relayer that swaps from native ETH, whose
+outgoing value leaves no log.
+
+All three are populated only when `txHash`/`network` was passed and
+that transaction actually paid this charge: on a still-open (or
+expired) charge, its receipt has to contain a Transfer of an accepted
+token to the charge's address (even one not yet deep enough to be
+credited); on an already-`confirmed`/`underpaid` charge, it has to be
+a transfer already credited to it on that network. Otherwise
+`transactionSender` is `null` and both lists are `[]` — no hint, a
 not-found/reverted transaction, or a successful transaction that never
 paid this charge — so a public `txHash` can't be used to claim someone
 else's payment. That makes it safe to call `check()` again with the
 same hint after [`watch()`](#watch-id-signal) reports `confirmed`, to
-learn the sender the stream itself doesn't carry.
+learn the payer evidence the stream itself doesn't carry.
 
 It also carries `confirmationProgress` — non-null while a detected
 transfer hasn't yet reached its network's required confirmation depth,
