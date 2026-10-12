@@ -6,6 +6,7 @@ import {
   type ConfirmationProgress,
   type CreateChargeRequest,
   type CreateSwapQuoteInput,
+  type EscrowSafeTransaction,
   type GetChargeQrCodeQueryRequest,
   type ListChargesInput,
   PAGINATION_LIMIT_DEFAULT,
@@ -121,12 +122,29 @@ export function createChargesClient(passedConfig: HttpConfig = {}) {
     },
 
     /**
+     * The exact Safe transaction `release()` will execute — destination,
+     * token, amount in base units, chain id, Safe nonce, its EIP-712
+     * `typedData` and `safeTxHash`. Sign `typedData` with the key behind
+     * `escrowReleaserAddress` (`toSignableEscrowTypedData` from
+     * `@klappay/types` converts it for viem) and pass the signature to
+     * `release()`. Read-only; valid only while the escrow's balance is
+     * unchanged. Requires `charges:write`.
+     */
+    async prepareRelease(id: string): Promise<EscrowSafeTransaction> {
+      return request<EscrowSafeTransaction>(config, {
+        method: 'GET',
+        path: `/v1/charges/${encodeURIComponent(id)}/release/prepare`,
+      })
+    },
+
+    /**
      * Releases an escrow-configured charge's entire live token balance
      * from its Safe to the charge's split address, where the normal
      * distribution mechanism then pays out the merchant/platform shares.
      * `signature` must be a valid Safe transaction signature from this
-     * charge's `escrowReleaserAddress`, verified on-chain by the Safe
-     * contract itself. Can only be called once per charge. Requires
+     * charge's `escrowReleaserAddress` over the transaction
+     * `prepareRelease()` returns, verified on-chain by the Safe contract
+     * itself. Can only be called once per charge. Requires
      * `charges:write`.
      */
     async release(id: string, input: ReleaseEscrowRequest): Promise<KlapCharge> {
@@ -139,11 +157,25 @@ export function createChargesClient(passedConfig: HttpConfig = {}) {
     },
 
     /**
+     * Same as `prepareRelease()`, for `refund()`. Check `destination`
+     * before signing — it's the sender of the most recently credited
+     * transfer, which isn't always the buyer (an exchange withdrawal, a
+     * swap router, or only the last of several paying wallets).
+     */
+    async prepareRefund(id: string): Promise<EscrowSafeTransaction> {
+      return request<EscrowSafeTransaction>(config, {
+        method: 'GET',
+        path: `/v1/charges/${encodeURIComponent(id)}/refund/prepare`,
+      })
+    },
+
+    /**
      * Refunds an escrow-configured charge's entire live token balance from
      * its Safe back to the address that funded it, instead of the split
      * address — no distribution follows. `signature` must be a valid Safe
-     * transaction signature from this charge's `escrowReleaserAddress`,
-     * verified on-chain by the Safe contract itself. Mutually exclusive
+     * transaction signature from this charge's `escrowReleaserAddress`
+     * over the transaction `prepareRefund()` returns, verified on-chain by
+     * the Safe contract itself. Mutually exclusive
      * with `release()` — an escrow can only ever be released or refunded
      * once, never both. Requires `charges:write`.
      */

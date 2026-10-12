@@ -149,6 +149,13 @@ const charge = await klap.charges.create({
 })
 ```
 
+`releaserAddress` must be a plain externally-owned account (a private
+key that produces an ECDSA signature) — a smart-contract wallet or
+multisig can't sign the escrow's Safe transaction. It's set once and
+can't be rotated for an existing charge, and it can move the escrowed
+funds directly on-chain, so treat its key like the funds themselves.
+Omit it to default to the API key's own `payoutAddress`.
+
 Everything else about `create()` — `acceptedPayments`, `expiresIn`,
 `metadata`, `splitRecipients` — works exactly the same on an escrow
 charge; `escrow` only changes how the funds are released once paid.
@@ -588,6 +595,54 @@ live over SSE (see [above](#observing-a-charge-until-it-resolves));
 most one receipt read, and only when the hint is a transfer already
 credited to it.
 
+## `prepareRelease(id)` and `prepareRefund(id)`
+
+Return the exact Safe transaction [`release()`](#release-id-input) or
+[`refund()`](#refund-id-input) will execute, so you sign it with any
+EIP-712 signer instead of rebuilding the Safe transaction yourself — no
+Safe SDK or RPC access needed on your side:
+
+```ts
+import { toSignableEscrowTypedData } from '@klappay/types'
+import { privateKeyToAccount } from 'viem/accounts'
+
+const releaser = privateKeyToAccount(process.env.ESCROW_RELEASER_KEY as `0x${string}`)
+
+const prepared = await klap.charges.prepareRelease('ch_abc123')
+// check prepared.destination, tokenAddress, amount, chainId and
+// safeAddress against your own records before signing
+const signature = await releaser.signTypedData(toSignableEscrowTypedData(prepared.typedData))
+const charge = await klap.charges.release('ch_abc123', { signature })
+```
+
+The result (`EscrowSafeTransaction` in `@klappay/types`) carries
+`action`, `network`, `token`, `chainId`, `safeAddress`,
+`releaserAddress`, `tokenAddress`, `destination`, `amount` (a
+base-unit integer string, e.g. `'1500000'` for 1.50 of a 6-decimal
+token) with its `decimals`, the Safe `nonce`, `safeTxHash` and
+`typedData` — plain JSON. `toSignableEscrowTypedData()` turns
+`typedData` into the shape viem's typings expect (`bigint` numbers,
+literal field types); other EIP-712 signers (ethers, a KMS) can take
+`typedData` as-is.
+
+Preparing is read-only — it never moves funds — and the signature is
+only valid while the escrow's balance is unchanged: if more funds
+arrive before you submit, `release()`/`refund()` rejects with `400
+escrow_invalid_signature`; prepare again and re-sign. For a refund,
+check `destination` before signing: it's the sender of the most
+recently credited transfer, which isn't always the buyer (an exchange
+withdrawal arrives from the exchange's wallet, a swap from a router
+contract, and a charge paid by several wallets refunds only to the last
+one).
+
+Both reject the same way the action itself would before anything is
+signed: `409 escrow_already_released`/`escrow_already_refunded`, `422
+escrow_not_configured`, `422 escrow_nothing_to_release`/
+`escrow_nothing_to_refund` (zero balance), `422
+escrow_multiple_payment_pairs`, and `422 escrow_safe_mismatch` (the
+Safe can't be rebuilt at the charge's address — not transient, contact
+support). Requires `charges:write`.
+
 ## `release(id, input)`
 
 Releases an escrow-configured charge's entire live token balance from
@@ -602,8 +657,9 @@ const charge = await klap.charges.release('ch_abc123', {
 ```
 
 `signature` must be a valid Safe transaction signature from this
-charge's `escrowReleaserAddress` (see [`escrow`](#escrow) above),
-authorizing a transfer of the escrow's full live balance — the amount
+charge's `escrowReleaserAddress` (see [`escrow`](#escrow) above) over
+the transaction [`prepareRelease()`](#preparerelease-id-and-preparerefund-id)
+returns, authorizing a transfer of the escrow's full live balance — the amount
 actually received, not whatever was fixed at creation, since it can
 vary with under/overpayment. Verified on-chain by the Safe contract
 itself before anything moves, never taken on faith by Klappay. Can only
@@ -628,7 +684,9 @@ const charge = await klap.charges.refund('ch_abc123', {
 
 `signature` works exactly like [`release()`](#release-id-input)'s —
 a valid Safe transaction signature from this charge's
-`escrowReleaserAddress`, verified on-chain by the Safe contract itself,
+`escrowReleaserAddress` over the transaction
+[`prepareRefund()`](#preparerelease-id-and-preparerefund-id) returns,
+verified on-chain by the Safe contract itself,
 authorizing a transfer of the escrow's full live balance. Mutually
 exclusive with `release()` — an escrow can only ever be released or
 refunded once, never both; whichever happens first rejects the other

@@ -1,4 +1,4 @@
-import type { Charge, SwapQuote, TimelineEvent } from '@klappay/types'
+import type { Charge, EscrowSafeTransaction, SwapQuote, TimelineEvent } from '@klappay/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createChargesClient } from './charges'
 
@@ -331,6 +331,77 @@ describe('createChargesClient().check()', () => {
     expect(result.transactionSender).toBe('0xrelayer')
     expect(result.tokenSenders).toEqual(['0xwallet'])
     expect(result.userOperationSenders).toEqual(['0xsmartaccount'])
+  })
+})
+
+const FAKE_PREPARED_RELEASE: EscrowSafeTransaction = {
+  action: 'release',
+  network: 'base',
+  token: 'USDC',
+  chainId: 8453,
+  safeAddress: '0x5aa1ce2b1f2ae1bd3b0fd2fbd6f3f2f5b5d6c7e8',
+  releaserAddress: '0x1111111111111111111111111111111111111111',
+  tokenAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+  destination: '0x2222222222222222222222222222222222222222',
+  amount: '25000000',
+  decimals: 6,
+  nonce: '0',
+  safeTxHash: `0x${'8'.repeat(64)}`,
+  typedData: {
+    domain: { chainId: 8453, verifyingContract: '0x5aa1ce2b1f2ae1bd3b0fd2fbd6f3f2f5b5d6c7e8' },
+    types: { SafeTx: [{ name: 'to', type: 'address' }] },
+    primaryType: 'SafeTx',
+    message: {
+      to: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+      value: '0',
+      data: '0xa9059cbb',
+      operation: 0,
+      safeTxGas: '0',
+      baseGas: '0',
+      gasPrice: '0',
+      gasToken: '0x0000000000000000000000000000000000000000',
+      refundReceiver: '0x0000000000000000000000000000000000000000',
+      nonce: '0',
+    },
+  },
+}
+
+describe('createChargesClient().prepareRelease()/prepareRefund()', () => {
+  beforeEach(() => {
+    requestMock.mockReset()
+  })
+
+  it('gets the release prepare endpoint and returns the prepared transaction unwrapped', async () => {
+    requestMock.mockResolvedValue(FAKE_PREPARED_RELEASE)
+
+    const result = await createChargesClient(config).prepareRelease('ch_fake')
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'GET',
+      path: '/v1/charges/ch_fake/release/prepare',
+    })
+    expect(result).toEqual(FAKE_PREPARED_RELEASE)
+  })
+
+  it('gets the refund prepare endpoint, not the release one', async () => {
+    const preparedRefund = { ...FAKE_PREPARED_RELEASE, action: 'refund' as const }
+    requestMock.mockResolvedValue(preparedRefund)
+
+    const result = await createChargesClient(config).prepareRefund('ch_fake')
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'GET',
+      path: '/v1/charges/ch_fake/refund/prepare',
+    })
+    expect(result).toEqual(preparedRefund)
+  })
+
+  it('url-encodes the charge id', async () => {
+    requestMock.mockResolvedValue(FAKE_PREPARED_RELEASE)
+
+    await createChargesClient(config).prepareRelease('ch/../x')
+
+    expect(requestMock.mock.calls[0]?.[1].path).toBe('/v1/charges/ch%2F..%2Fx/release/prepare')
   })
 })
 
