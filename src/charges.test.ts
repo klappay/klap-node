@@ -25,6 +25,8 @@ const FAKE_CHARGE: Charge = {
   feePercent: 1,
   feeAmount: 0.1,
   merchantAmount: 9.9,
+  gasFeeAmount: 0,
+  requestedAmount: 10,
   currency: 'USD',
   acceptedPayments: [{ token: 'USDC', network: 'base' }],
   paidWith: [],

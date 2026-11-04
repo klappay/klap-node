@@ -21,6 +21,8 @@ const FAKE_CHARGE: Charge = {
   feePercent: 1,
   feeAmount: 0.1,
   merchantAmount: 9.9,
+  gasFeeAmount: 0,
+  requestedAmount: 10,
   currency: 'USD',
   acceptedPayments: [{ token: 'USDC', network: 'base' }],
   paidWith: [],
@@ -70,6 +72,7 @@ describe('createSandboxClient() convenience methods', () => {
     ['underpay', 'charge.underpaid'],
     ['settle', 'charge.settled'],
     ['failSettlement', 'charge.settlement_failed'],
+    ['settleBelowMinimum', 'charge.settlement_below_minimum'],
   ] as const)('%s() triggers %s with no amount', async (method, event) => {
     // biome-ignore lint/suspicious/noExplicitAny: exercising every convenience method generically
     const result = await (createSandboxClient(config)[method] as any)('ch_1')

@@ -1,3 +1,5 @@
+import type { SelfSettlement } from '@klappay/types'
+
 export class KlapApiError extends Error {
   readonly code: string
   readonly status: number
@@ -39,6 +41,18 @@ export class SettlementFailedError extends Error {
     super(`Settlement failed for charge ${chargeId} after retries were exhausted.`)
     this.name = 'SettlementFailedError'
     this.chargeId = chargeId
+  }
+}
+
+export class SettlementBelowMinimumError extends Error {
+  readonly chargeId: string
+  readonly selfSettlement: SelfSettlement | undefined
+
+  constructor(chargeId: string, selfSettlement?: SelfSettlement) {
+    super(`Payout for charge ${chargeId} is parked: the split can't cover the gas to pay it out.`)
+    this.name = 'SettlementBelowMinimumError'
+    this.chargeId = chargeId
+    this.selfSettlement = selfSettlement
   }
 }
 

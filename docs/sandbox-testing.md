@@ -45,6 +45,7 @@ convenience method for the most common case; the others cover the rest:
 | `klap.sandbox.underpay(chargeId)` | `charge.underpaid` — expired after a partial payment (trigger `partiallyPay` first) |
 | `klap.sandbox.settle(chargeId)` | `charge.settled` — payout completed |
 | `klap.sandbox.failSettlement(chargeId)` | `charge.settlement_failed` — payout failed |
+| `klap.sandbox.settleBelowMinimum(chargeId)` | `charge.settlement_below_minimum` — payout parked, the split can't cover its gas |
 | `klap.sandbox.trigger(chargeId, event, amount?)` | Any of the above, by event name — what the others call internally |
 
 None of these ever touch the blockchain — `settle()`/`failSettlement()`
@@ -89,6 +90,13 @@ await klap.sandbox.confirm(charge.id)
 await klap.sandbox.failSettlement(charge.id)
 
 await expect(charge.waitForSettlement()).rejects.toThrow(SettlementFailedError)
+```
+
+```ts
+await klap.sandbox.confirm(charge.id)
+await klap.sandbox.settleBelowMinimum(charge.id)
+
+await expect(charge.waitForSettlement()).rejects.toThrow(SettlementBelowMinimumError)
 ```
 
 `expire()` simulates a charge that nobody ever paid:

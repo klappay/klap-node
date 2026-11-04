@@ -47,6 +47,7 @@ see [`charges.md`](./charges.md) for the full behavior.
 | `ChargeExpiredError` | `waitForConfirmation()` — the charge's `status` reached `expired` (nobody paid before `expiresAt`) |
 | `ChargeUnderpaidError` | `waitForConfirmation()` — the charge's `status` reached `underpaid` (partial payment, then `expiresAt` passed) |
 | `SettlementFailedError` | `waitForSettlement()` — `settlementStatus` reached `failed` (retries exhausted; rare, contact support) |
+| `SettlementBelowMinimumError` | `waitForSettlement()` — `settlementStatus` reached `below_minimum` (the split can't cover the gas to pay out; carries `selfSettlement`, see [`charges.md`](./charges.md#waitforsettlement-options)) |
 | `WaitTimeoutError` | Either method — the `timeoutMs` elapsed before a terminal state was reached |
 
 Each carries a `chargeId` property. `WaitTimeoutError` also carries the

@@ -2,6 +2,7 @@ import type { Charge, ConfirmationProgress, TriggerableChargeEvent } from '@klap
 import {
   ChargeExpiredError,
   ChargeUnderpaidError,
+  SettlementBelowMinimumError,
   SettlementFailedError,
   WaitTimeoutError,
 } from './errors'
@@ -46,6 +47,8 @@ const EVENT_CHECKS: Record<TriggerableChargeEvent, (charge: Charge) => WaitCheck
     c.settlementStatus === 'completed' ? { done: true, result: c } : { done: false },
   'charge.settlement_failed': (c) =>
     c.settlementStatus === 'failed' ? { done: true, result: c } : { done: false },
+  'charge.settlement_below_minimum': (c) =>
+    c.settlementStatus === 'below_minimum' ? { done: true, result: c } : { done: false },
   'charge.overpaid': (c) => (c.isOverpaid ? { done: true, result: c } : { done: false }),
 }
 
@@ -189,6 +192,9 @@ export function wrapCharge<T extends Charge>(config: HttpConfig, charge: T): Che
       return pollOrStreamUntil(config, charge.id, options, (c) => {
         if (c.settlementStatus === 'completed') return { done: true, result: c }
         if (c.settlementStatus === 'failed') throw new SettlementFailedError(charge.id)
+        if (c.settlementStatus === 'below_minimum') {
+          throw new SettlementBelowMinimumError(charge.id, c.selfSettlement)
+        }
         return { done: false }
       })
     },

@@ -4,6 +4,7 @@ import { createChargesClient } from './charges'
 import {
   ChargeExpiredError,
   ChargeUnderpaidError,
+  SettlementBelowMinimumError,
   SettlementFailedError,
   WaitTimeoutError,
 } from './errors'
@@ -31,6 +32,8 @@ const FAKE_CHARGE: Charge = {
   feePercent: 1,
   feeAmount: 0.1,
   merchantAmount: 9.9,
+  gasFeeAmount: 0,
+  requestedAmount: 10,
   currency: 'USD',
   acceptedPayments: [{ token: 'USDC', network: 'base' }],
   paidWith: [],
@@ -254,6 +257,29 @@ describe('waitForSettlement() via polling (no apiKey configured)', () => {
       SettlementFailedError,
     )
   })
+
+  it('rejects with the self-settlement data once a poll sees settlementStatus: below_minimum', async () => {
+    requestMock.mockResolvedValueOnce(FAKE_CHARGE)
+    const charge = await createChargesClient(configNoApiKey).get('ch_fake')
+    const selfSettlement = {
+      splitAddress: '0xsplit',
+      recipients: [{ address: '0xmerchant', percentAllocation: 100 }],
+      distributorFeePercent: 0.1,
+      salt: '0xsalt',
+      pairs: [{ network: 'base', token: 'USDC' }],
+    }
+    requestMock.mockResolvedValueOnce({
+      ...FAKE_CHARGE,
+      settlementStatus: 'below_minimum',
+      selfSettlement,
+    })
+
+    const error = await charge.waitForSettlement({ pollIntervalMs: 5 }).catch((err) => err)
+
+    expect(error).toBeInstanceOf(SettlementBelowMinimumError)
+    expect(error.chargeId).toBe('ch_fake')
+    expect(error.selfSettlement).toEqual(selfSettlement)
+  })
 })
 
 describe('waitFor() via polling (no apiKey configured)', () => {
@@ -270,6 +296,7 @@ describe('waitFor() via polling (no apiKey configured)', () => {
     ['charge.underpaid', { status: 'underpaid' }],
     ['charge.settled', { settlementStatus: 'completed' }],
     ['charge.settlement_failed', { settlementStatus: 'failed' }],
+    ['charge.settlement_below_minimum', { settlementStatus: 'below_minimum' }],
     ['charge.overpaid', { isOverpaid: true }],
   ] as [TriggerableChargeEvent, Partial<Charge>][])(
     'resolves for %s once the matching field changes',
@@ -282,6 +309,28 @@ describe('waitFor() via polling (no apiKey configured)', () => {
       expect(result).toMatchObject(patch)
     },
   )
+})
+
+describe('waitForSettlement() via the live SSE stream (apiKey configured)', () => {
+  beforeEach(() => {
+    requestMock.mockReset()
+    streamMock.mockReset()
+  })
+
+  // The server keeps this stream open on below_minimum, so nothing but the check ends the wait.
+  it('rejects on below_minimum without the stream closing or falling back to polling', async () => {
+    requestMock.mockResolvedValueOnce(FAKE_CHARGE)
+    const charge = await createChargesClient(config).get('ch_fake')
+    requestMock.mockClear()
+
+    streamMock.mockImplementation(async function* () {
+      yield { event: 'charge', data: { ...FAKE_CHARGE, settlementStatus: 'below_minimum' } }
+      await new Promise(() => {})
+    })
+
+    await expect(charge.waitForSettlement()).rejects.toThrow(SettlementBelowMinimumError)
+    expect(requestMock).not.toHaveBeenCalled()
+  })
 })
 
 describe('waitForConfirmation() via the live SSE stream (apiKey configured)', () => {

@@ -81,9 +81,9 @@ recipients and the full request/response shape split.
 ### `feePayer`
 
 By default (`feePayer: 'merchant'`, the default) Klappay's fee is
-deducted from `amount` before it reaches your payout. Set
-`feePayer: 'payer'` instead to gross up `amount` so the payer covers the
-fee — you receive the full `amount` you asked for:
+deducted from your payout. Set `feePayer: 'payer'` instead to gross up
+the charge so the payer covers the fee — you net exactly the amount you
+asked for:
 
 ```ts
 const charge = await klap.charges.create({
@@ -94,10 +94,44 @@ const charge = await klap.charges.create({
 })
 ```
 
-Either way, the returned charge carries `feePercent`, `feeAmount`, and
-`merchantAmount` so you can render a price breakdown without
-reimplementing the fee math yourself — `merchantAmount` is always what
-actually lands in your payout, regardless of who covered the fee.
+Either way, the returned charge carries `requestedAmount`, `feePercent`,
+`feeAmount`, `gasFeeAmount`, and `merchantAmount` so you can render a
+price breakdown without reimplementing the fee math yourself —
+`merchantAmount` is always what your side of the split nets, regardless
+of who covered the fee.
+
+### Gas fee and minimum amounts
+
+**The `amount` you pass is no longer always the `amount` the payer
+sends.** Klappay quotes a network gas fee at creation from live gas
+prices and adds it to the total, whichever `feePayer` you pick:
+
+```ts
+const charge = await klap.charges.create({
+  amount: 49.9,
+  acceptedPayments: [{ token: 'USDC', network: 'base' }],
+  expiresIn: 3600,
+})
+
+charge.requestedAmount // 49.9 — what you asked for
+charge.gasFeeAmount // the gas fee, already included in charge.amount
+charge.amount // what to show the payer: merchantAmount + feeAmount + gasFeeAmount
+```
+
+Always display `charge.amount` (or `amountExact`), not your own input.
+`feeAmount` is never below 0.1% of `amount`; with a `feePercent` under
+0.1%, the payer covers the difference. Charges created before gas fees
+existed report `gasFeeAmount: 0` and `requestedAmount: null`.
+
+`create()` rejects an `amount` below the minimum with
+`422 amount_below_minimum` (`param: 'amount'`): `0.10` live, `5.00` live
+when the charge accepts `ethereum`, `0.01` test. It can also reject with
+`503 gas_quote_unavailable` when gas prices can't be read — safe to
+retry. `chargeMinAmount(environment, networks)` from `@klappay/types`
+(or the zero-dependency `@klappay/types/constants`) returns the minimum.
+
+A transfer below `PAYMENT_MIN_AMOUNT` (`0.10` live, `0.01` test) doesn't
+count toward `amountReceived` unless it completes the charge.
 
 ### Exact amounts
 
@@ -171,8 +205,16 @@ recorded but never credited. Every EVM network (Arc included) can be
 mixed freely in one charge, but TRON can't be mixed with any of them —
 a charge pays out to one split address predicted up front, and TRON's
 split contract differs from the EVM one, so `create()` rejects a list
-mixing `tron` with an EVM network with `400 validation_error`. Not
-sure which pairs are actually live for your environment right now? See [`networks.md`](./networks.md) —
+mixing `tron` with an EVM network with `400 validation_error`.
+`ethereum` is isolated too: a charge that accepts it can accept both of
+its tokens but no other network, also `400 validation_error`, so create
+a separate charge for it (`mixesIsolatedNetwork` from `@klappay/types`
+checks a list up front). `create()` also rejects with
+`422 recipient_transfer_restricted` (`param: 'acceptedPayments'`, the
+message lists the affected pairs) when a token issuer blocks an address
+this charge pays from receiving on an accepted pair — see
+[`getTransferability()`](./recipients.md#checking-issuer-restrictions).
+Not sure which pairs are actually live for your environment right now? See [`networks.md`](./networks.md) —
 `klap.networks.get()` returns the current matrix; build a payment-method
 picker from it instead of hardcoding the pairs client-side, since it
 changes as new networks/tokens come online.
@@ -317,20 +359,46 @@ const settled = await confirmed.waitForSettlement({ timeoutMs: 10 * 60_000 })
 ```
 
 Resolves when `settlementStatus === 'completed'`, rejects with
-`SettlementFailedError` if it reaches `'failed'`, or `WaitTimeoutError`
-if the timeout elapses first.
+`SettlementFailedError` if it reaches `'failed'`,
+`SettlementBelowMinimumError` if it reaches `'below_minimum'`, or
+`WaitTimeoutError` if the timeout elapses first.
+
+`below_minimum` means what the split holds hasn't covered the gas to pay
+it out for 24 hours, so Klappay sent nothing. The funds stay in the
+split, and a new payment on that pair re-arms the payout. It isn't final
+the way `failed` is, but nothing changes without a new payment or
+someone settling it, so the wait stops instead of running out the
+timeout. `err.selfSettlement` (the same as `charge.selfSettlement`,
+present only in this state) has the split address, recipients, salt,
+distributor fee and pairs needed to deploy the split and call
+`distribute()` yourself:
+
+```ts
+import { SettlementBelowMinimumError } from '@klappay/node'
+
+try {
+  await confirmed.waitForSettlement()
+} catch (err) {
+  if (err instanceof SettlementBelowMinimumError) {
+    console.log(err.selfSettlement?.splitAddress, err.selfSettlement?.pairs)
+  } else {
+    throw err
+  }
+}
+```
 
 ### `waitFor(event, options?)`
 
 `waitForConfirmation`/`waitForSettlement` cover the two most common
 questions — did the payer pay, did the merchant get paid. `waitFor()` is
-the general form, for the other five events:
+the general form, for the other six events:
 
 ```ts
 const partiallyPaid = await charge.waitFor('charge.partially_paid')
 const expired = await charge.waitFor('charge.expired')
 const underpaid = await charge.waitFor('charge.underpaid')
 const failed = await charge.waitFor('charge.settlement_failed')
+const parked = await charge.waitFor('charge.settlement_below_minimum')
 const overpaid = await charge.waitFor('charge.overpaid')
 ```
 
@@ -668,6 +736,12 @@ escrow_already_released` (or `409 escrow_already_refunded` if
 [`refund()`](#refund-id-input) got there first — the two are mutually
 exclusive). Requires `charges:write`. Fires `charge.escrow_released`
 once the release completes on-chain — see [`webhooks.md`](./webhooks.md).
+
+The balance has to cover the gas to release and pay it out at current
+prices: otherwise it rejects with `422 escrow_release_not_covered` and
+nothing is sent, or `503 gas_quote_unavailable` if gas prices can't be
+read. `refund()` has no such check, since the whole balance goes back to
+the payer.
 
 ## `refund(id, input)`
 

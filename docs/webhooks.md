@@ -43,9 +43,13 @@ names for the same thing: `confirmed` means Klap detected the payment
 on-chain; `settled` means the merchant's wallet actually received it —
 a separate, later step. Subscribe to `confirmed` if you only need "will
 I get paid," or `settled` if you need "has the money actually arrived."
+`charge.settlement_below_minimum` fires when a payout stays unfunded for
+24 hours because the split can't cover the gas to pay it out: nothing was
+sent, and `data.selfSettlement` has what's needed to
+[settle it yourself](./charges.md#waitforsettlement-options).
 See the full event list in `@klappay/types`' `ChargeWebhookEventTypeSchema`
-(10 charge events) and `WebhookDeliveryEventTypeSchema` (3 delivery-health
-events) — 13 events total.
+(11 charge events) and `WebhookDeliveryEventTypeSchema` (3 delivery-health
+events) — 14 events total.
 
 ### Environment scoping
 

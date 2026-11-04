@@ -23,6 +23,7 @@ describe('package public exports', () => {
     expect(sdk.ChargeExpiredError).toBeTypeOf('function')
     expect(sdk.ChargeUnderpaidError).toBeTypeOf('function')
     expect(sdk.SettlementFailedError).toBeTypeOf('function')
+    expect(sdk.SettlementBelowMinimumError).toBeTypeOf('function')
     expect(sdk.WaitTimeoutError).toBeTypeOf('function')
     expect(sdk.InvalidWebhookSignatureError).toBeTypeOf('function')
     expect(sdk.WebhookTimestampToleranceError).toBeTypeOf('function')

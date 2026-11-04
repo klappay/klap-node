@@ -20,6 +20,7 @@ export {
   ChargeExpiredError,
   ChargeUnderpaidError,
   SettlementFailedError,
+  SettlementBelowMinimumError,
   WaitTimeoutError,
   InvalidWebhookSignatureError,
   WebhookTimestampToleranceError,

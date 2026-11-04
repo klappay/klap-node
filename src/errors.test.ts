@@ -6,6 +6,7 @@ import {
   KlapApiError,
   MissingBaseUrlError,
   MissingCredentialError,
+  SettlementBelowMinimumError,
   SettlementFailedError,
   WaitTimeoutError,
   WebhookTimestampToleranceError,
@@ -52,6 +53,27 @@ describe('SettlementFailedError', () => {
     expect(err.name).toBe('SettlementFailedError')
     expect(err.chargeId).toBe('ch_3')
     expect(err.message).toBe('Settlement failed for charge ch_3 after retries were exhausted.')
+  })
+})
+
+describe('SettlementBelowMinimumError', () => {
+  it('names the charge and carries what a self-settlement needs', () => {
+    const selfSettlement = {
+      splitAddress: '0xsplit',
+      recipients: [{ address: '0xmerchant', percentAllocation: 100 }],
+      distributorFeePercent: 0.1,
+      salt: '0xsalt',
+      pairs: [{ network: 'base' as const, token: 'USDC' as const }],
+    }
+    const err = new SettlementBelowMinimumError('ch_5', selfSettlement)
+    expect(err.name).toBe('SettlementBelowMinimumError')
+    expect(err.chargeId).toBe('ch_5')
+    expect(err.selfSettlement).toEqual(selfSettlement)
+    expect(err.message).toContain('ch_5')
+  })
+
+  it('leaves selfSettlement undefined when the charge did not carry one', () => {
+    expect(new SettlementBelowMinimumError('ch_6').selfSettlement).toBeUndefined()
   })
 })
 
