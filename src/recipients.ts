@@ -4,6 +4,7 @@ import {
   PAGINATION_LIMIT_MAX,
   type PaginationQueryRequest,
   type Recipient,
+  type RecipientTransferability,
 } from '@klappay/types'
 import { type HttpConfig, request, withApiKeyEnvFallback } from './http'
 
@@ -38,6 +39,19 @@ export function createRecipientsClient(passedConfig: HttpConfig = {}) {
         method: 'PATCH',
         path: `/v1/recipients/${encodeURIComponent(id)}`,
         body: { payout },
+      })
+    },
+
+    /**
+     * What each token issuer's own contract says about this recipient's
+     * address, per token/network pair enabled in this key's environment:
+     * `receive` (can it be credited) and `send` (can it move funds out).
+     * Requires `recipients:read`.
+     */
+    async getTransferability(id: string): Promise<RecipientTransferability> {
+      return request<RecipientTransferability>(config, {
+        method: 'GET',
+        path: `/v1/recipients/${encodeURIComponent(id)}/transferability`,
       })
     },
 

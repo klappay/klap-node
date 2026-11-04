@@ -87,6 +87,31 @@ describe('createRecipientsClient()', () => {
     })
   })
 
+  it('getTransferability() reads the per-pair report for that recipient', async () => {
+    const report = {
+      recipientId: 'rc_1',
+      address: FAKE_RECIPIENT.address,
+      pairs: [{ token: 'USDT', network: 'base', receive: 'allowed', send: 'restricted' }],
+    }
+    requestMock.mockResolvedValue(report)
+
+    const result = await createRecipientsClient(config).getTransferability('rc_1')
+
+    expect(requestMock).toHaveBeenCalledWith(config, {
+      method: 'GET',
+      path: '/v1/recipients/rc_1/transferability',
+    })
+    expect(result).toEqual(report)
+  })
+
+  it('encodes an id containing special characters in the path for getTransferability()', async () => {
+    requestMock.mockResolvedValue({ recipientId: 'rc/1 x', address: '0x', pairs: [] })
+
+    await createRecipientsClient(config).getTransferability('rc/1 x')
+
+    expect(requestMock.mock.calls[0]?.[1].path).toBe('/v1/recipients/rc%2F1%20x/transferability')
+  })
+
   it('encodes an id containing special characters in the path for setPayout() and revoke()', async () => {
     requestMock.mockResolvedValue(FAKE_RECIPIENT)
 

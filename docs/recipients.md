@@ -64,6 +64,38 @@ entries, frozen at creation).
 Creating a charge with `splitRecipients` requires `charges:split_write`
 in addition to `charges:write`.
 
+## Checking issuer restrictions
+
+`getTransferability()` reports what each token issuer's own contract says
+about this recipient's address, for every token/network pair enabled in
+your key's environment. Requires `recipients:read`:
+
+```ts
+const { pairs } = await klap.recipients.getTransferability(recipient.id)
+// [{ token: 'USDC', network: 'base', receive: 'allowed', send: 'allowed' }, ...]
+
+const blocked = pairs.filter((pair) => pair.receive === 'restricted')
+```
+
+Each of `receive` (can it be credited) and `send` (can it move funds
+out) is `allowed`, `restricted` or `unknown`:
+
+- `receive: 'restricted'` on an accepted pair makes `charges.create()`
+  reject with `422 recipient_transfer_restricted`. USDT only checks the
+  sender, so its `receive` is always `allowed`.
+- `send: 'restricted'` never blocks a charge, but funds the address
+  receives may stay stuck until the issuer lifts the restriction — worth
+  telling its owner.
+- `unknown` means no answer (no such function on that network, or the
+  read failed or timed out) and never blocks anything.
+
+The only source is the token contract's on-chain view function, never a
+Klappay list or a sanctions provider. `pairs` is empty for a TRON address
+today. Results are cached server-side for a few minutes and the endpoint
+has its own per-tenant rate limit, so check on registration or before a
+large charge rather than on every one. An unknown or revoked id throws a
+`KlapApiError` with `code: 'recipient_not_found'`.
+
 ## Listing and revoking
 
 ```ts
