@@ -8,6 +8,8 @@ only** — not meant to be run as a standalone script, and not for browser
 use (it handles secret API keys, which must never reach client-side
 code).
 
+Part of [Klap](https://klappay.com), the non-custodial crypto payments API.
+
 Built on top of [`@klappay/types`](https://www.npmjs.com/package/@klappay/types) — the same
 request/response contracts the API itself uses, so the SDK is always in sync with the actual
 API shape.
